@@ -17,11 +17,11 @@ export const inquiryService = {
   //     return response.data;
   //   },
 
-  //   updatePromotion: async (id: string, promotion: Partial<Promotion>) => {
-  //     const response = await axiosInstance.put(
-  //       `${API_ENDPOINTS.PROMOTIONS}/${id}`,
-  //       promotion
-  //     );
-  //     return response.data;
-  //   },
+  updateInquiry: async (id: string, reqBody: Partial<any>) => {
+    const response = await axiosInstance.patch(
+      `${API_ENDPOINTS.CUSTOMER_CARE_INQUIRIES}/${id}`,
+      reqBody
+    );
+    return response.data;
+  },
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState, useMemo } from "react";
 import { Input } from "./ui/input";
 import {
   Select,
@@ -25,6 +25,7 @@ import {
 } from "@/types/inquiries";
 import { formatEpochToRelativeTime } from "@/utils/functions/formatRelativeTime";
 import { ArrowLeft } from "lucide-react";
+import colors from "@/theme/colors";
 
 const DashboardCustomerCare = () => {
   const customerCareZ = useCustomerCareStore((state) => state.user);
@@ -35,25 +36,35 @@ const DashboardCustomerCare = () => {
   const [selectedInquiryDetails, setSelectedInquiryDetails] =
     useState<Inquiry | null>(null);
 
-  useEffect(() => {
+  const fetchInquiries = async () => {
     setIsLoading(true);
+    try {
+      if (customerCareZ && customerCareZ.id) {
+        const response: ApiResponse<Inquiry[]> =
+          await inquiryService.getAllInquiries(customerCareZ.id);
+        if (response.EC === 0) {
+          setAssignedInquiries(response.data);
+        }
+      }
+    } catch (e) {
+      console.log("error", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (customerCareZ && customerCareZ.id) {
-      inquiryService
-        .getAllInquiries(customerCareZ.id)
-        .then((response: ApiResponse<Inquiry[]>) => {
-          if (response.EC === 0) {
-            setAssignedInquiries(response.data);
-          }
-        })
-        .catch((e) => {
-          console.log("error", e);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
+      fetchInquiries();
     }
   }, [customerCareZ]);
 
+  console.log(
+    "cehck inqu",
+    assignedInquiries?.filter(
+      (item) => item?.status === ENUM_INQUIRY_STATUS.RESOLVED
+    )
+  );
   if (isLoading) {
     return <Spinner isVisible isOverlay />;
   }
@@ -66,6 +77,8 @@ const DashboardCustomerCare = () => {
       {/* Conditional Rendering */}
       {selectedInquiryDetails ? (
         <InquiryDetails
+          fetchInquiries={fetchInquiries}
+          setIsLoading={setIsLoading}
           inquiry={selectedInquiryDetails}
           onBack={() => setSelectedInquiryDetails(null)}
         />
@@ -94,6 +107,21 @@ const ListInquiries = ({
   const [statusFilter, setStatusFilter] = useState<ENUM_INQUIRY_STATUS>(
     ENUM_INQUIRY_STATUS.OPEN
   );
+  const [selectedTab, setSelectedTab] = useState<string>("ALL");
+
+  // Filter inquiries based on selected tab
+  const filteredInquiries = useMemo(() => {
+    if (!assignedInquiries) return [];
+
+    if (selectedTab === "ALL") {
+      return assignedInquiries;
+    }
+
+    return assignedInquiries.filter(
+      (inquiry) => inquiry.status === selectedTab
+    );
+  }, [assignedInquiries, selectedTab]);
+
   // Function to get status color
   const getStatusColor = (status: ENUM_INQUIRY_STATUS) => {
     switch (status) {
@@ -157,23 +185,35 @@ const ListInquiries = ({
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="All Tickets" className="mb-4">
+      <Tabs
+        defaultValue="ALL"
+        className="mb-4"
+        value={selectedTab}
+        onValueChange={setSelectedTab}
+      >
         <TabsList>
-          <TabsTrigger value="All Tickets">All Tickets</TabsTrigger>
-          <TabsTrigger value="New">New</TabsTrigger>
-          <TabsTrigger value="On-Going">On-Going</TabsTrigger>
-          <TabsTrigger value="Resolved">Resolved</TabsTrigger>
+          <TabsTrigger value="ALL">All Tickets</TabsTrigger>
+          <TabsTrigger value={ENUM_INQUIRY_STATUS.OPEN}>Open</TabsTrigger>
+          <TabsTrigger value={ENUM_INQUIRY_STATUS.RESOLVED}>
+            Resolved
+          </TabsTrigger>
+          <TabsTrigger value={ENUM_INQUIRY_STATUS.CLOSED}>Closed</TabsTrigger>
+          <TabsTrigger value={ENUM_INQUIRY_STATUS.IN_PROGRESS}>
+            On-Going
+          </TabsTrigger>
         </TabsList>
       </Tabs>
       <div className="space-y-4">
-        {assignedInquiries?.map((ticket, index) => (
+        {filteredInquiries.map((ticket, index) => (
           <Card
             key={index}
-            className={`border ${
-              ticket.priority === ENUM_INQUIRY_PRIORITY.HIGH
-                ? "border-blue-500 border-2"
-                : ""
-            }`}
+            style={{
+              borderWidth: 1,
+              borderColor:
+                ticket.priority === ENUM_INQUIRY_PRIORITY.HIGH
+                  ? colors.error
+                  : undefined,
+            }}
           >
             <div className="flex flex-col">
               <CardHeader className="flex flex-row items-center justify-between">
@@ -249,8 +289,12 @@ const ListInquiries = ({
 const InquiryDetails = ({
   inquiry,
   onBack,
+  setIsLoading,
+  fetchInquiries,
 }: {
   inquiry: Inquiry;
+  setIsLoading: Dispatch<SetStateAction<boolean>>;
+  fetchInquiries: () => void;
   onBack: () => void;
 }) => {
   const [status, setStatus] = useState<ENUM_INQUIRY_STATUS>(inquiry.status);
@@ -261,7 +305,7 @@ const InquiryDetails = ({
     inquiry.issue_type || "OTHER"
   );
   const [resolutionType, setResolutionType] = useState<string>(
-    inquiry.resolution_type || ""
+    inquiry.resolution_type || "OTHER"
   );
   const [resolutionNotes, setResolutionNotes] = useState<string>(
     inquiry.resolution_notes || ""
@@ -295,23 +339,51 @@ const InquiryDetails = ({
   };
 
   const handleSave = async () => {
+    if (
+      !resolutionType ||
+      !issueType ||
+      !priority ||
+      !status ||
+      !resolutionNotes
+    ) {
+      console.log("check plz fill all fields");
+      return;
+    }
+    setIsLoading(true);
     setIsSubmitting(true);
+    const requestBody = {
+      last_response_at: Math.floor(Date.now() / 1000),
+      resolved_at:
+        status === ENUM_INQUIRY_STATUS.RESOLVED
+          ? Math.floor(Date.now() / 1000)
+          : undefined,
+      resolution_notes: resolutionNotes,
+      status,
+      issue_type: issueType,
+      resolution_type:
+        status === ENUM_INQUIRY_STATUS.RESOLVED ? resolutionType : undefined,
+    };
+    console.log("cehck req", requestBody, "check order", inquiry?.order?.id);
     try {
       // Here you would call your API to update the inquiry
-      // await inquiryService.updateInquiry(inquiry.id, {
-      //   status,
-      //   priority,
-      //   issue_type: issueType,
-      //   resolution_type: resolutionType,
-      //   resolution_notes: resolutionNotes
-      // });
-      console.log("Saving changes...");
+      const response = await inquiryService.updateInquiry(
+        inquiry?.id,
+        requestBody
+      );
+      console.log("Saving changes...", response, response.data);
+      if (response.EC === 0) {
+        fetchInquiries();
+        onBack();
+      }
     } catch (error) {
       console.error("Error updating inquiry:", error);
     } finally {
       setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
+
+  console.log("check what here", inquiry);
 
   return (
     <div className="space-y-6">
@@ -468,25 +540,33 @@ const InquiryDetails = ({
                   <div className="font-medium">
                     {inquiry.customer.last_name} {inquiry.customer.first_name}
                   </div>
-                  <div className="text-sm text-gray-500">
-                    Customer ID: {inquiry.customer_id}
-                  </div>
                 </div>
               </div>
 
               {inquiry.order && (
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium">Related Order</h4>
-                  <div className="text-sm">Order ID: {inquiry.order.id}</div>
+                  <div className="flex flex-row items-center justify-between">
+                    <div className="text-sm flex flex-row gap-2">
+                      <p className="">Amount:</p>
+                      <p style={{ color: colors.primary }}>
+                        ${inquiry.order.total_amount}
+                      </p>
+                    </div>
+                    <p className="text-sm">
+                      Created:{" "}
+                      {formatEpochToRelativeTime(inquiry?.order?.order_time) ===
+                      "Just now"
+                        ? null
+                        : "ago"}{" "}
+                    </p>
+                  </div>
                 </div>
               )}
 
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">Timeline</h4>
                 <div className="text-sm space-y-1">
-                  <div>
-                    Created: {formatEpochToRelativeTime(inquiry.created_at)} ago
-                  </div>
                   {inquiry.first_response_at && (
                     <div>
                       First Response:{" "}

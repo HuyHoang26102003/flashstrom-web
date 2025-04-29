@@ -5,4 +5,5 @@ export const API_ENDPOINTS = {
   DRIVERS: "/drivers",
   CUSTOMER_CARE_REPRESENTATIVES: "/customer-care",
   INQUIRIES: "/inquiries",
+  CUSTOMER_CARE_INQUIRIES: "/customer-care-inquiries",
 };
