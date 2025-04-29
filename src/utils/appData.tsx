@@ -3,7 +3,8 @@ export type sideBarItem = {
   link?: string;
   dropdownItem?: sideBarItem[];
 };
-export const sideBarItems: sideBarItem[] = [
+// * AD = APP DATA
+export const AD_ADMIN_SIDEBAR_ITEMS: sideBarItem[] = [
   {
     title: "Dashboard",
     link: "/",
@@ -49,5 +50,20 @@ export const sideBarItems: sideBarItem[] = [
         link: "/manage/faqs",
       },
     ],
+  },
+];
+
+export const AD_SIDEBAR_ITEMS_CUSTOMER_CARE: sideBarItem[] = [
+  {
+    title: "Dashboard",
+    link: "/",
+  },
+  {
+    title: "Chats",
+    link: "/chats",
+  },
+  {
+    title: "Orders",
+    link: "/orders",
   },
 ];

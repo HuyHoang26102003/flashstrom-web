@@ -9,7 +9,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { sideBarItems, type sideBarItem } from "@/utils/appData";
+import {
+  AD_ADMIN_SIDEBAR_ITEMS,
+  type sideBarItem,
+  AD_SIDEBAR_ITEMS_CUSTOMER_CARE,
+} from "@/utils/appData";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAdminStore } from "@/stores/adminStore";
@@ -37,15 +41,15 @@ const SideBar = () => {
 
     switch (loggedInAs) {
       case "SUPER_ADMIN":
-        return sideBarItems;
+        return AD_ADMIN_SIDEBAR_ITEMS;
       case "COMPANION_ADMIN":
-        return sideBarItems.filter(
+        return AD_ADMIN_SIDEBAR_ITEMS.filter(
           (item) =>
             item.title !== "App Managers" &&
             item.title !== "Customers Statistics"
         );
       case "FINANCE_ADMIN": {
-        const filteredItems = sideBarItems.filter(
+        const filteredItems = AD_ADMIN_SIDEBAR_ITEMS.filter(
           (item) =>
             item.title !== "Drivers Statistics" &&
             item.title !== "Restaurant Owner Statistics" &&
@@ -53,22 +57,19 @@ const SideBar = () => {
             item.title !== "Customer Care Team"
         );
         const appManagerItems =
-          sideBarItems
-            .find((item) => item.title === "App Managers")
-            ?.dropdownItem?.map((subItem) => ({
-              title: subItem.title,
-              link: subItem.link,
-            })) || [];
+          AD_ADMIN_SIDEBAR_ITEMS.find(
+            (item) => item.title === "App Managers"
+          )?.dropdownItem?.map((subItem) => ({
+            title: subItem.title,
+            link: subItem.link,
+          })) || [];
         return [
           ...filteredItems.filter((item) => item.title !== "App Managers"),
           ...appManagerItems,
         ];
       }
       case "CUSTOMER_CARE_REPRESENTATIVE":
-        return [
-          ...sideBarItems.filter((item) => item.title === "Dashboard"),
-          { title: "Chats", link: "/chats" },
-        ];
+        return AD_SIDEBAR_ITEMS_CUSTOMER_CARE;
       default:
         return [];
     }

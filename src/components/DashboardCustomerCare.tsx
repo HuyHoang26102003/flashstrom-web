@@ -15,7 +15,7 @@ import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
 import { useCustomerCareStore } from "@/stores/customerCareStore";
-import { inquiryService } from "@/services/customer-cares/inquiryService";
+// import { inquiryService } from "@/services/customer-cares/inquiryService";
 import { Spinner } from "./Spinner";
 import { ApiResponse } from "@/types/common";
 import {
@@ -26,6 +26,7 @@ import {
 import { formatEpochToRelativeTime } from "@/utils/functions/formatRelativeTime";
 import { ArrowLeft } from "lucide-react";
 import colors from "@/theme/colors";
+import { inquiryService } from "@/services/customer-cares/inquiryService";
 
 const DashboardCustomerCare = () => {
   const customerCareZ = useCustomerCareStore((state) => state.user);
@@ -101,26 +102,49 @@ const ListInquiries = ({
   assignedInquiries: Inquiry[] | null;
   setSelectedInquiryDetails: Dispatch<SetStateAction<Inquiry | null>>;
 }) => {
-  const [priorityFilter, setPriorityFilter] = useState<ENUM_INQUIRY_PRIORITY>(
-    ENUM_INQUIRY_PRIORITY.HIGH
-  );
-  const [statusFilter, setStatusFilter] = useState<ENUM_INQUIRY_STATUS>(
-    ENUM_INQUIRY_STATUS.OPEN
+  const [priorityFilter, setPriorityFilter] = useState<
+    ENUM_INQUIRY_PRIORITY | "ALL"
+  >("ALL");
+  const [statusFilter, setStatusFilter] = useState<ENUM_INQUIRY_STATUS | "ALL">(
+    "ALL"
   );
   const [selectedTab, setSelectedTab] = useState<string>("ALL");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // Filter inquiries based on selected tab
+  // Filter inquiries based on selected tab, priority, status, and search query
   const filteredInquiries = useMemo(() => {
     if (!assignedInquiries) return [];
 
-    if (selectedTab === "ALL") {
-      return assignedInquiries;
-    }
+    return assignedInquiries.filter((inquiry) => {
+      // Tab filter
+      const tabMatch = selectedTab === "ALL" || inquiry.status === selectedTab;
 
-    return assignedInquiries.filter(
-      (inquiry) => inquiry.status === selectedTab
-    );
-  }, [assignedInquiries, selectedTab]);
+      // Priority filter
+      const priorityMatch =
+        priorityFilter === "ALL" || inquiry.priority === priorityFilter;
+
+      // Status filter
+      const statusMatch =
+        statusFilter === "ALL" || inquiry.status === statusFilter;
+
+      // Search query filter (search in subject, description, and customer name)
+      const searchMatch =
+        !searchQuery ||
+        inquiry.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        inquiry.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        `${inquiry.customer.first_name} ${inquiry.customer.last_name}`
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
+
+      return tabMatch && priorityMatch && statusMatch && searchMatch;
+    });
+  }, [
+    assignedInquiries,
+    selectedTab,
+    priorityFilter,
+    statusFilter,
+    searchQuery,
+  ]);
 
   // Function to get status color
   const getStatusColor = (status: ENUM_INQUIRY_STATUS) => {
@@ -154,12 +178,15 @@ const ListInquiries = ({
         <Input
           placeholder="Search for ticket"
           className="w-1/3 bg-white border"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
           <SelectTrigger className="w-40 bg-white border">
             <SelectValue placeholder="Select Priority" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="ALL">All Priorities</SelectItem>
             <SelectItem value={ENUM_INQUIRY_PRIORITY.URGENT}>Urgent</SelectItem>
             <SelectItem value={ENUM_INQUIRY_PRIORITY.HIGH}>High</SelectItem>
             <SelectItem value={ENUM_INQUIRY_PRIORITY.MEDIUM}>Medium</SelectItem>
@@ -171,9 +198,13 @@ const ListInquiries = ({
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="ALL">All Statuses</SelectItem>
             <SelectItem value={ENUM_INQUIRY_STATUS.OPEN}>Open</SelectItem>
             <SelectItem value={ENUM_INQUIRY_STATUS.IN_PROGRESS}>
               In Progress
+            </SelectItem>
+            <SelectItem value={ENUM_INQUIRY_STATUS.RESOLVED}>
+              Resolved
             </SelectItem>
             <SelectItem value={ENUM_INQUIRY_STATUS.CLOSED}>Closed</SelectItem>
             <SelectItem value={ENUM_INQUIRY_STATUS.ESCALATE}>
@@ -181,7 +212,7 @@ const ListInquiries = ({
             </SelectItem>
           </SelectContent>
         </Select>
-        <Button>New Ticket</Button>
+        {/* <Button>New Ticket</Button> */}
       </div>
 
       {/* Tabs */}
@@ -383,7 +414,7 @@ const InquiryDetails = ({
     }
   };
 
-  console.log("check what here", inquiry);
+  console.log("check what here", inquiry?.order?.order_time);
 
   return (
     <div className="space-y-6">

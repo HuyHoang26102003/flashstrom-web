@@ -6,4 +6,5 @@ export const API_ENDPOINTS = {
   CUSTOMER_CARE_REPRESENTATIVES: "/customer-care",
   INQUIRIES: "/inquiries",
   CUSTOMER_CARE_INQUIRIES: "/customer-care-inquiries",
+  ORDERS: "/orders",
 };
