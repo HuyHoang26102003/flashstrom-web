@@ -26,6 +26,7 @@ import {
   ChatMessage,
   Message,
 } from "@/types/chat";
+import { formatDateToRelativeTime } from "@/utils/functions/formatRelativeTime";
 
 interface Avatar {
   key: string;
@@ -191,26 +192,6 @@ export default function ChatPage() {
   }, [selectedRoomId, socket]);
 
   // Format timestamp
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const seconds = Math.floor(diff / 1000);
-
-    if (seconds < 60) return "Just now";
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h`;
-    const days = Math.floor(hours / 24);
-    if (days < 7) return `${days}d`;
-    const weeks = Math.floor(days / 7);
-    if (weeks < 4) return `${weeks}w`;
-    const months = Math.floor(days / 30);
-    if (months < 12) return `${months}mo`;
-    const years = Math.floor(months / 12);
-    return `${years}y`;
-  };
 
   // Get sender name
   const getSenderName = (message: ChatMessage) => {
@@ -326,7 +307,7 @@ export default function ChatPage() {
                       {getParticipantName(chat)}
                     </span>
                     <span className="text-xs text-gray-400">
-                      {formatTime(chat.lastMessage.timestamp)}
+                      {formatDateToRelativeTime(chat.lastMessage.timestamp)}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -370,7 +351,7 @@ export default function ChatPage() {
                       {getParticipantName(chat)}
                     </span>
                     <span className="text-sm text-gray-500">
-                      {formatTime(chat.lastMessage.timestamp)}
+                      {formatDateToRelativeTime(chat.lastMessage.timestamp)}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -406,9 +387,9 @@ export default function ChatPage() {
                 {selectedChat ? getParticipantName(selectedChat) : "User"}
               </h2>
               <p className="text-sm text-gray-500">
-                Online - Last seen{" "}
+                Last active{" "}
                 {selectedChat
-                  ? formatTime(selectedChat.lastActivity)
+                  ? formatDateToRelativeTime(selectedChat.lastActivity)
                   : "Unknown"}
               </p>
             </div>
@@ -458,7 +439,7 @@ export default function ChatPage() {
                     isCurrentUser(msg) ? "text-white/70" : "text-gray-500"
                   }`}
                 >
-                  {formatTime(msg.timestamp)}
+                  {formatDateToRelativeTime(msg.timestamp)}
                 </p>
               </div>
             </div>

@@ -13,17 +13,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "../ui/button";
-import { Label } from "../ui/label";
 import AuthDialogContent from "../AuthDialogContent";
 import { useState } from "react";
 import { IMAGE_LINKS } from "@/assets/imageLinks";
