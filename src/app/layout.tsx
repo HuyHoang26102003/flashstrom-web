@@ -29,12 +29,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-tr from-indigo-200 to-green-200`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-tr from-indigo-200 to-green-200 min-h-screen m-0 flex items-center justify-center`}
       >
-        <div className="background max-w-screen-lg my-6 rounded-lg overflow-hidden shadow-md mx-auto min-h-screen">
-          <div className="grid grid-cols-12">
+        <div className="background max-w-screen-lg h-[calc(100vh-1rem)] rounded-lg shadow-md overflow-hidden mx-auto">
+          <div className="grid grid-cols-12 h-full">
             <SideBar />
-            <div className="fc p-6 col-span-10">
+            <div className="fc p-6 col-span-10 overflow-auto">
               <MainNav />
               {children}
             </div>

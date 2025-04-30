@@ -37,7 +37,7 @@ const MainNav = () => {
     ? `${adminZ.last_name} ${adminZ.first_name}`
     : `${customerCareZ?.last_name} ${customerCareZ?.first_name}`;
   return (
-    <div className="jb w-full gap-4 py-8">
+    <div className="jb w-full gap-4 mb-6">
       <Link href={"/"}>
         <Avatar>
           <AvatarImage src="https://res.cloudinary.com/dpubnzap3/image/upload/w_1000,c_fill,ar_1:1,g_auto,r_max,bo_5px_solid_red,b_rgb:262c35/v1738821741/ic45aqy23c7ynle7yemv.png" />

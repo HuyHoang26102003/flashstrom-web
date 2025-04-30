@@ -116,7 +116,7 @@ const SideBar = () => {
   }, [pathname, loggedInAs, validRoutes, router]);
 
   return (
-    <div className="min-h-screen bg-white fc py-4 pl-4 col-span-2">
+    <div className="h-full bg-white fc py-4 pl-4 col-span-2">
       {filteredSideBarItems.map((item, i) => {
         if (!item.dropdownItem) {
           return (

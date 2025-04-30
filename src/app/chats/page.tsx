@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Paperclip,
   Smile,
   Camera,
-  Mic,
   Phone,
   Video,
   MoreVertical,
+  Send,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,6 +27,7 @@ import {
   Message,
 } from "@/types/chat";
 import { formatDateToRelativeTime } from "@/utils/functions/formatRelativeTime";
+import { limitCharacters } from "@/utils/functions/stringFunc";
 
 interface Avatar {
   key: string;
@@ -86,6 +87,15 @@ export default function ChatPage() {
   const [socket, setSocket] = useState<ReturnType<typeof createSocket> | null>(
     null
   );
+  const [pendingMessages, setPendingMessages] = useState<
+    {
+      content: string;
+      roomId: string;
+      timestamp: string;
+    }[]
+  >([]);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const hasFetchedHistory = useRef<{ [key: string]: boolean }>({});
 
   const getAccessToken = () => {
     const customerCareStore = useCustomerCareStore.getState();
@@ -107,7 +117,6 @@ export default function ChatPage() {
       const result = await chatSocket.getAllChats(socketInstance);
       console.log("Successfully fetched chats:", result);
       setChats(result);
-      // Select the first chat room if available
       if (result.ongoing.length > 0 && !selectedRoomId) {
         const firstRoomId = result.ongoing[0].roomId;
         setSelectedRoomId(firstRoomId);
@@ -127,7 +136,12 @@ export default function ChatPage() {
       console.log("Fetching chat history for room:", roomId);
       const result = await chatSocket.getChatHistory(socketInstance, roomId);
       console.log("Successfully fetched chat history:", result);
-      setChatHistory(result.messages);
+      setChatHistory((prev) => {
+        // Preserve temporary messages
+        const tempMessages = prev.filter((msg) => msg.id.startsWith("temp-"));
+        return [...result.messages, ...tempMessages];
+      });
+      hasFetchedHistory.current[roomId] = true;
     } catch (error) {
       console.error("Error fetching chat history:", error);
     }
@@ -159,14 +173,43 @@ export default function ChatPage() {
       console.error("Socket server error:", error);
     });
 
-    // Set up new message listener
     chatSocket.onNewMessage(newSocket, (message: ChatMessage) => {
       console.log("New message received:", message);
+      console.log("Current pendingMessages:", pendingMessages);
+      console.log("Current chatHistory:", chatHistory);
+
       if (message.roomId === selectedRoomId) {
-        setChatHistory((prev) => [...prev, message]);
+        const normalizedContent = message.content.normalize("NFC");
+        setPendingMessages((prev) => {
+          const updatedPending = prev.filter(
+            (pending) =>
+              !(
+                pending.content.normalize("NFC") === normalizedContent &&
+                pending.roomId === message.roomId
+              )
+          );
+          console.log("Updated pendingMessages:", updatedPending);
+          return updatedPending;
+        });
+
+        setChatHistory((prev) => {
+          const updatedHistory = prev.filter(
+            (msg) =>
+              !(
+                msg.content.normalize("NFC") === normalizedContent &&
+                msg.roomId === message.roomId &&
+                msg.senderType === "CUSTOMER_CARE_REPRESENTATIVE" &&
+                msg.id.startsWith("temp-")
+              )
+          );
+          console.log("Updated chatHistory:", updatedHistory);
+          return [...updatedHistory, message];
+        });
+
+        setTimeout(() => {
+          fetchAllChats(newSocket);
+        }, 200);
       }
-      // Fetch all chats to update the sidebar (optional for synchronization)
-      fetchAllChats(newSocket);
     });
 
     if (newSocket.connected) {
@@ -182,18 +225,19 @@ export default function ChatPage() {
       newSocket.off("newMessage");
       newSocket.disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fetch chat history when selectedRoomId changes
   useEffect(() => {
-    if (selectedRoomId && socket) {
+    if (
+      selectedRoomId &&
+      socket &&
+      !hasFetchedHistory.current[selectedRoomId]
+    ) {
       fetchChatHistory(socket, selectedRoomId);
     }
   }, [selectedRoomId, socket]);
 
-  // Format timestamp
-
-  // Get sender name
   const getSenderName = (message: ChatMessage) => {
     if (message.customerSender) {
       return `${message.customerSender.first_name} ${message.customerSender.last_name}`;
@@ -207,7 +251,6 @@ export default function ChatPage() {
     return "Unknown";
   };
 
-  // Get sender avatar
   const getSenderAvatar = (message: ChatMessage | Message) => {
     if (message.customerSender && message.customerSender.avatar) {
       return message.customerSender.avatar.url;
@@ -224,12 +267,10 @@ export default function ChatPage() {
     return "";
   };
 
-  // Check if message is from current user
   const isCurrentUser = (message: ChatMessage) => {
     return message.senderType === "CUSTOMER_CARE_REPRESENTATIVE";
   };
 
-  // Get participant name
   const getParticipantName = (chat: ChatRoom) => {
     const participant = chat.otherParticipant;
     if (!participant) return "Unknown";
@@ -242,7 +283,6 @@ export default function ChatPage() {
     );
   };
 
-  // Get participant avatar
   const getParticipantAvatar = (chat: ChatRoom) => {
     return chat.otherParticipant?.avatar?.url || "";
   };
@@ -251,21 +291,103 @@ export default function ChatPage() {
     chats.ongoing.find((chat) => chat.roomId === selectedRoomId) ||
     chats.awaiting.find((chat) => chat.roomId === selectedRoomId);
 
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatHistory]);
+
   const handleSendMessage = async () => {
     if (message.trim() && selectedRoomId && socket) {
       try {
-        const newMessage = await chatSocket.sendMessage(
-          socket,
-          selectedRoomId,
-          message,
-          "TEXT"
-        );
-        setChatHistory((prev) => [...prev, newMessage]);
+        const tempMessage: ChatMessage = {
+          id: `temp-${Date.now()}`,
+          roomId: selectedRoomId,
+          senderId: "current-user",
+          senderType: "CUSTOMER_CARE_REPRESENTATIVE",
+          content: message,
+          messageType: "TEXT",
+          timestamp: new Date().toISOString(),
+          readBy: [],
+          customerSender: null,
+          driverSender: null,
+          restaurantSender: null,
+          customerCareSender: null,
+        };
+
+        setChatHistory((prev) => {
+          const newHistory = [...prev, tempMessage];
+          console.log("Updated chatHistory:", newHistory);
+          return newHistory;
+        });
+
+        await new Promise((resolve) => {
+          setPendingMessages((prev) => {
+            const newPending = [
+              ...prev,
+              {
+                content: message,
+                roomId: selectedRoomId,
+                timestamp: tempMessage.timestamp,
+              },
+            ];
+            console.log("Updated pendingMessages:", newPending);
+            resolve(newPending);
+            return newPending;
+          });
+        });
+
         setMessage("");
-        // Fetch all chats to update the sidebar (optional)
+
+        await chatSocket.sendMessage(socket, selectedRoomId, message, "TEXT");
+
+        // Timeout to clear pending message if no server response
+        setTimeout(() => {
+          setPendingMessages((prev) =>
+            prev.filter(
+              (pending) =>
+                !(
+                  pending.content === message &&
+                  pending.roomId === selectedRoomId
+                )
+            )
+          );
+          setChatHistory((prev) =>
+            prev.filter(
+              (msg) =>
+                !(
+                  msg.content === message &&
+                  msg.roomId === selectedRoomId &&
+                  msg.senderType === "CUSTOMER_CARE_REPRESENTATIVE" &&
+                  msg.id.startsWith("temp-")
+                )
+            )
+          );
+        }, 10000);
+
         await fetchAllChats(socket);
       } catch (error) {
         console.error("Error sending message:", error);
+        setChatHistory((prev) =>
+          prev.filter(
+            (msg) =>
+              !(
+                msg.content === message &&
+                msg.roomId === selectedRoomId &&
+                msg.senderType === "CUSTOMER_CARE_REPRESENTATIVE"
+              )
+          )
+        );
+        setPendingMessages((prev) =>
+          prev.filter(
+            (pending) =>
+              !(
+                pending.content === message && pending.roomId === selectedRoomId
+              )
+          )
+        );
       }
     }
   };
@@ -276,10 +398,21 @@ export default function ChatPage() {
     }
   };
 
+  const isMessagePending = (msg: ChatMessage) => {
+    return (
+      msg.senderType === "CUSTOMER_CARE_REPRESENTATIVE" &&
+      msg.id.startsWith("temp-") &&
+      pendingMessages.some(
+        (pending) =>
+          pending.content.normalize("NFC") === msg.content.normalize("NFC") &&
+          pending.roomId === msg.roomId
+      )
+    );
+  };
+
   return (
-    <div className="flex">
-      {/* Sidebar */}
-      <div className="w-1/3 border-r border-gray-200 gap-4 p-4">
+    <div className="flex overflow-hidden">
+      <div className="w-1/3 border-r border-gray-200 px-4 overflow-y-auto">
         <Input placeholder="Search" className="mb-4 bg-white" />
         <div className="flex-col mb-4 bg-white rounded-lg shadow-md p-4">
           <h2 className="text-lg font-semibold mb-2 bg-white">Ongoing chats</h2>
@@ -311,8 +444,8 @@ export default function ChatPage() {
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">
-                      {chat.lastMessage.content}
+                    <span className="text-xs leading-3 text-gray-600">
+                      {limitCharacters(chat.lastMessage.content, 16)}
                     </span>
                     {chat.lastMessage.readBy.length === 1 && (
                       <Badge className="bg-danger-500 h-5 text-white">1</Badge>
@@ -369,8 +502,7 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* Chat Window */}
-      <div className="flex-1 flex flex-col m-4 rounded-lg bg-white overflow-hidden shadow-md">
+      <div className="flex-1 flex flex-col bg-white rounded-lg shadow-md overflow-hidden">
         <div className="border-b border-gray-200 p-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Avatar>
@@ -382,11 +514,11 @@ export default function ChatPage() {
                 {selectedChat ? getParticipantName(selectedChat)[0] : "U"}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <h2 className="text-lg font-semibold">
+            <div className="">
+              <h2 className="font-semibold">
                 {selectedChat ? getParticipantName(selectedChat) : "User"}
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-xs text-gray-500">
                 Last active{" "}
                 {selectedChat
                   ? formatDateToRelativeTime(selectedChat.lastActivity)
@@ -434,16 +566,24 @@ export default function ChatPage() {
                 }`}
               >
                 <p>{msg.content}</p>
-                <p
-                  className={`text-xs mt-1 ${
-                    isCurrentUser(msg) ? "text-white/70" : "text-gray-500"
-                  }`}
-                >
-                  {formatDateToRelativeTime(msg.timestamp)}
-                </p>
+                <div className="flex justify-between items-center">
+                  <p
+                    className={`text-xs mt-1 ${
+                      isCurrentUser(msg) ? "text-white/70" : "text-gray-500"
+                    }`}
+                  >
+                    {formatDateToRelativeTime(msg.timestamp)}
+                  </p>
+                  {isCurrentUser(msg) && isMessagePending(msg) && (
+                    <p className="text-xs mt-1 ml-2 text-yellow-300">
+                      sending...
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           ))}
+          <div ref={chatEndRef} />
         </div>
 
         <div className="bg-white border-t border-gray-200 p-4 flex items-center space-x-2">
@@ -469,7 +609,7 @@ export default function ChatPage() {
             className="bg-primary"
             onClick={handleSendMessage}
           >
-            <Mic className="h-5 w-5 text-white" />
+            <Send className="h-5 w-5 text-white" />
           </Button>
         </div>
       </div>
