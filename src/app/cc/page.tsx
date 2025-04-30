@@ -30,7 +30,7 @@ interface CustomerCare {
   id: string;
   first_name: string;
   last_name: string;
-  active_points: number;
+  active_point: number;
   avatar: {
     url: string;
     key: string;
@@ -112,7 +112,7 @@ export const columns: ColumnDef<CustomerCare>[] = [
     ),
   },
   {
-    accessorKey: "active_points",
+    accessorKey: "active_point",
     header: ({ column }) => (
       <Button
         className="text-center"
@@ -123,9 +123,9 @@ export const columns: ColumnDef<CustomerCare>[] = [
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    cell: ({ row }) => (
-      <div className="text-center">{row.getValue("active_points")}</div>
-    ),
+    cell: ({ row }) => {
+      return <div className="text-center">{row.getValue("active_point")}</div>;
+    },
   },
   {
     id: "actions",
@@ -190,21 +190,29 @@ const Page = () => {
   const fetchCustomerCare = async () => {
     setIsLoading(true);
     try {
-      const result = await customerCareService.getAllCustomerCareRepresentatives();
+      const result =
+        await customerCareService.getAllCustomerCareRepresentatives();
       console.log("Result from API:", result);
-      
+
       // Handle both array and object with data property
-      const careData = Array.isArray(result) ? result : 
-                      (result && result.data ? result.data : []);
-      
+      const careData = Array.isArray(result)
+        ? result
+        : result && result.data
+        ? result.data
+        : [];
+
       console.log("Processed data:", careData);
       setCustomerCare(careData);
-  
+
       // Calculate statistics
       const totalCount = careData.length;
-      const activeCount = careData.filter((cc: {available_for_work: boolean}) => cc.available_for_work).length;
-      const bannedCount = careData.filter((cc: {available_for_work: boolean}) => !cc.available_for_work).length;
-  
+      const activeCount = careData.filter(
+        (cc: { available_for_work: boolean }) => cc.available_for_work
+      ).length;
+      const bannedCount = careData.filter(
+        (cc: { available_for_work: boolean }) => !cc.available_for_work
+      ).length;
+
       setStats({
         total: totalCount,
         active: activeCount,
@@ -224,22 +232,21 @@ const Page = () => {
   };
 
   const handleGenerateCustomerCare = async () => {
-    setIsLoading(true); 
+    setIsLoading(true);
     try {
-      const result = await customerCareService.createCustomerCareRepresentative();
-      console.log("Generate result:", result); 
-      
+      const result =
+        await customerCareService.createCustomerCareRepresentative();
+      console.log("Generate result:", result);
+
       if (result && result.EC === 0) {
         await fetchCustomerCare();
       } else {
         console.error("Failed to generate customer care rep:", result);
-   
       }
     } catch (error) {
       console.error("Error generating customer care rep:", error);
- 
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   };
 
@@ -251,7 +258,7 @@ const Page = () => {
 
   return (
     <div className="p-4">
-       {isLoading && <Spinner isVisible={isLoading} isOverlay />}
+      {isLoading && <Spinner isVisible={isLoading} isOverlay />}
       <h1 className="text-2xl font-bold mb-4">Customer Care Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -262,7 +269,9 @@ const Page = () => {
 
         <div className="bg-white p-4 rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-2">Active Representatives</h2>
-          <div className="text-3xl font-bold text-green-600">{stats.active}</div>
+          <div className="text-3xl font-bold text-green-600">
+            {stats.active}
+          </div>
         </div>
 
         <div className="bg-white p-4 rounded-lg shadow">

@@ -95,7 +95,7 @@ export default function ChatPage() {
     }[]
   >([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const hasFetchedHistory = useRef<{ [key: string]: boolean }>({});
+  // const hasFetchedHistory = useRef<{ [key: string]: boolean }>({});
 
   const getAccessToken = () => {
     const customerCareStore = useCustomerCareStore.getState();

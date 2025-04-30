@@ -267,6 +267,8 @@ const Page = () => {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  console.log("cehck waht avat", selectedOrder?.order_items);
+
   return (
     <div className="p-4">
       <Spinner isVisible={isLoading} isOverlay />
@@ -274,24 +276,24 @@ const Page = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-2">Total Orders</h2>
-          <div className="text-3xl font-bold text-blue-600">{stats.total}</div>
+          <h2 className="text-md font-semibold mb-2">Total Orders</h2>
+          <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-2">Delivered Orders</h2>
-          <div className="text-3xl font-bold text-green-600">
+          <h2 className="text-md font-semibold mb-2">Delivered Orders</h2>
+          <div className="text-2xl font-bold text-green-600">
             {stats.delivered}
           </div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-2">Pending Orders</h2>
-          <div className="text-3xl font-bold text-yellow-600">
+          <h2 className="text-md font-semibold mb-2">Pending Orders</h2>
+          <div className="text-2xl font-bold text-yellow-600">
             {stats.pending}
           </div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-2">Cancelled Orders</h2>
-          <div className="text-3xl font-bold text-red-600">
+          <h2 className="text-md font-semibold mb-2">Cancelled Orders</h2>
+          <div className="text-2xl font-bold text-red-600">
             {stats.cancelled}
           </div>
         </div>
@@ -457,13 +459,13 @@ const Page = () => {
                       key={index}
                       className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 bg-white rounded-md border hover:shadow-md transition-shadow"
                     >
-                      {item.avatar ? (
+                      {item?.item.avatar ? (
                         <Image
-                          src={item.avatar.url}
+                          src={item?.item.avatar.url}
                           alt={`${item.name} avatar`}
                           width={48}
                           height={48}
-                          className="rounded-full object-cover"
+                          className="rounded-sm aspect-square object-cover"
                         />
                       ) : (
                         <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-xs">
@@ -479,13 +481,13 @@ const Page = () => {
                           </p>
                         </div>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                          <div>
+                          <div className="flex-1">
                             <p className="text-xs font-medium text-gray-500">
                               Item ID
                             </p>
                             <IdCell id={item.item_id} />
                           </div>
-                          <div>
+                          <div className="flex-1">
                             <p className="text-xs font-medium text-gray-500">
                               Variant ID
                             </p>
@@ -587,7 +589,7 @@ const Page = () => {
                         alt="Driver Avatar"
                         width={40}
                         height={40}
-                        className="rounded-full"
+                        className="rounded-full aspect-square"
                       />
                     )}
                     <div>

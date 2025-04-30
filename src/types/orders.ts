@@ -14,6 +14,7 @@ export interface Order {
   customer_location: string;
   restaurant_location: string;
   order_items: {
+    item: { avatar: { url: string; key: string } };
     name: string;
     item_id: string;
     quantity: number;
