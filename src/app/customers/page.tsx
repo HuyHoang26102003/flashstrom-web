@@ -38,7 +38,7 @@ interface Customer {
   user: {
     email: string;
   };
-  isActive: boolean;
+  last_login: number;
 }
 
 const Page = () => {
@@ -47,7 +47,7 @@ const Page = () => {
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
-    ban: 0,
+    inactive: 0,
   });
 
   useEffect(() => {
@@ -65,13 +65,17 @@ const Page = () => {
 
   useEffect(() => {
     const totalCount = customers.length;
-    const activeCount = customers.filter((c) => c.isActive).length;
-    const bannedCount = customers.filter((c) => !c.isActive).length;
+    const activeCount = customers.filter(
+      (c) => !(Math.floor(Date.now() / 1000) - c.last_login > 2592000)
+    ).length;
+    const inactiveAccount = customers.filter(
+      (c) => Math.floor(Date.now() / 1000) - c.last_login > 2592000
+    ).length;
 
     setStats({
       total: totalCount,
       active: activeCount,
-      ban: bannedCount,
+      inactive: inactiveAccount,
     });
   }, [customers]);
 
@@ -187,18 +191,24 @@ const Page = () => {
         </Button>
       ),
       cell: ({ row }) => {
-        const isActive = row.getValue("isActive") as boolean;
+        const customer = row.original;
+        console.log(
+          "check cus",
+          Math.floor(Date.now() / 1000) - customer.last_login > 2592000
+        );
         return (
           <div className="text-center">
             <span
               className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
               ${
-                isActive
+                Math.floor(Date.now() / 1000) - customer.last_login > 2592000
                   ? "bg-green-100 text-green-800"
                   : "bg-red-100 text-red-800"
               }`}
             >
-              {isActive ? "Active" : "Inactive"}
+              {Math.floor(Date.now() / 1000) - customer.last_login > 2592000
+                ? "Inactive"
+                : "Active"}
             </span>
           </div>
         );
@@ -210,6 +220,10 @@ const Page = () => {
       header: "Actions",
       cell: ({ row }) => {
         const customer = row.original;
+        console.log(
+          "check cus",
+          Math.floor(Date.now() / 1000) - customer.last_login > 2592000
+        );
         return (
           <Popover>
             <PopoverTrigger asChild>
@@ -233,11 +247,19 @@ const Page = () => {
                   variant="ghost"
                   className="flex items-center justify-start"
                   onClick={() =>
-                    handleStatusChange(customer.id, !customer.isActive)
+                    handleStatusChange(
+                      customer.id,
+                      !(
+                        Math.floor(Date.now() / 1000) - customer.last_login >
+                        2592000
+                      )
+                    )
                   }
                 >
                   <Power className="mr-2 h-4 w-4" />
-                  {customer.isActive ? "Deactivate" : "Activate"}
+                  {Math.floor(Date.now() / 1000) - customer.last_login > 2592000
+                    ? "Deactivate"
+                    : "Activate"}
                 </Button>
                 <Button
                   variant="ghost"
@@ -281,7 +303,9 @@ const Page = () => {
 
         <div className="bg-white p-4 rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-2">Banned Customers</h2>
-          <div className="text-3xl font-bold text-red-600">{stats.ban}</div>
+          <div className="text-3xl font-bold text-red-600">
+            {stats.inactive}
+          </div>
         </div>
       </div>
 
