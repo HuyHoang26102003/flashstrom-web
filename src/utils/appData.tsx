@@ -22,6 +22,10 @@ export const AD_ADMIN_SIDEBAR_ITEMS: sideBarItem[] = [
     link: "/customers",
   },
   {
+    title: "Orders Statistics",
+    link: "/orders",
+  },
+  {
     title: "Customer Care Team",
     dropdownItem: [
       {

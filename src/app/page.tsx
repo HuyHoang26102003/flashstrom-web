@@ -3,6 +3,7 @@ import AdminDashboard from "@/components/AdminDashboard";
 import DashboardCustomerCare from "@/components/DashboardCustomerCare";
 import { useAdminStore } from "@/stores/adminStore";
 import { useCustomerCareStore } from "@/stores/customerCareStore";
+import { Spinner } from "@/components/Spinner";
 
 export default function Home() {
   const adminLoggedInAs = useAdminStore((state) => state.user?.logged_in_as);
@@ -21,7 +22,7 @@ export default function Home() {
       case "CUSTOMER_CARE_REPRESENTATIVE":
         return <DashboardCustomerCare />;
       default:
-        return <AdminDashboard />;
+        return <Spinner isVisible={true} isOverlay />;
     }
   };
 

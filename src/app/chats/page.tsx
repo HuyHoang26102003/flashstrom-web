@@ -136,12 +136,17 @@ export default function ChatPage() {
       console.log("Fetching chat history for room:", roomId);
       const result = await chatSocket.getChatHistory(socketInstance, roomId);
       console.log("Successfully fetched chat history:", result);
-      setChatHistory((prev) => {
-        // Preserve temporary messages
-        const tempMessages = prev.filter((msg) => msg.id.startsWith("temp-"));
-        return [...result.messages, ...tempMessages];
-      });
-      hasFetchedHistory.current[roomId] = true;
+
+      // Only update chat history for the current room
+      if (roomId === selectedRoomId) {
+        setChatHistory((prev) => {
+          // Keep temporary messages for the current room
+          const tempMessages = prev.filter(
+            (msg) => msg.roomId === roomId && msg.id.startsWith("temp-")
+          );
+          return [...result.messages, ...tempMessages];
+        });
+      }
     } catch (error) {
       console.error("Error fetching chat history:", error);
     }
@@ -229,11 +234,7 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => {
-    if (
-      selectedRoomId &&
-      socket &&
-      !hasFetchedHistory.current[selectedRoomId]
-    ) {
+    if (selectedRoomId && socket) {
       fetchChatHistory(socket, selectedRoomId);
     }
   }, [selectedRoomId, socket]);
@@ -354,17 +355,6 @@ export default function ChatPage() {
                 )
             )
           );
-          setChatHistory((prev) =>
-            prev.filter(
-              (msg) =>
-                !(
-                  msg.content === message &&
-                  msg.roomId === selectedRoomId &&
-                  msg.senderType === "CUSTOMER_CARE_REPRESENTATIVE" &&
-                  msg.id.startsWith("temp-")
-                )
-            )
-          );
         }, 10000);
 
         await fetchAllChats(socket);
@@ -376,7 +366,8 @@ export default function ChatPage() {
               !(
                 msg.content === message &&
                 msg.roomId === selectedRoomId &&
-                msg.senderType === "CUSTOMER_CARE_REPRESENTATIVE"
+                msg.senderType === "CUSTOMER_CARE_REPRESENTATIVE" &&
+                msg.id.startsWith("temp-")
               )
           )
         );
@@ -518,12 +509,6 @@ export default function ChatPage() {
               <h2 className="font-semibold">
                 {selectedChat ? getParticipantName(selectedChat) : "User"}
               </h2>
-              <p className="text-xs text-gray-500">
-                Last active{" "}
-                {selectedChat
-                  ? formatDateToRelativeTime(selectedChat.lastActivity)
-                  : "Unknown"}
-              </p>
             </div>
           </div>
           <div className="flex space-x-2">
