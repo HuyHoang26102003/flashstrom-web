@@ -25,7 +25,7 @@ export const customerService = {
       const response = await axiosInstance.get(API_ENDPOINTS.CUSTOMERS);
       // API might return { data: [customers] } or just [customers]
       const data = response.data;
-      return Array.isArray(data) ? data : data.data || [];
+      return data;
     } catch (error: any) {
       console.error("Error fetching customers:", error.message);
       return [];
@@ -54,68 +54,23 @@ export const customerService = {
       return null;
     }
   },
-};
-
-export const customerCareService = {
-  getAllCustomerCareRepresentatives: async () => {
+  getCustomerOrders: async (customerId: string) => {
     try {
       const response = await axiosInstance.get(
-        `companion-admin${API_ENDPOINTS.CUSTOMER_CARE_REPRESENTATIVES}`
+        `${API_ENDPOINTS.CUSTOMERS}${API_ENDPOINTS.ORDERS}/${customerId}`
       );
-      return response.data;
+      // API might return { data: [customers] } or just [customers]
+      const data = response.data;
+      return data;
     } catch (error: any) {
-      console.error("Error fetching customer care representatives:", error.message);
-      return { data: [] };
+      console.error("Error fetching customers:", error.message);
+      return [];
     }
   },
-
-  createCustomerCareRepresentative: async () => {
-    try {
-      const response = await axiosInstance.post(
-        `/companion-admin${API_ENDPOINTS.CUSTOMER_CARE_REPRESENTATIVES}`
-      );
-      return response.data;
-    } catch (error: any) {
-      console.error("Error creating customer care representative:", error.message);
-      return { EC: 1, data: null };
-    }
-  },
-
-  updateCustomerCareRepresentative: async (id: string, customerCare: Partial<CustomerCare>) => {
-    try {
-      const response = await axiosInstance.put(
-        `${API_ENDPOINTS.CUSTOMER_CARE_REPRESENTATIVES}/${id}`,
-        customerCare
-      );
-      return response.data;
-    } catch (error: any) {
-      console.error("Error updating customer care representative:", error.message);
-      return null;
-    }
-  },
-
-  deleteCustomerCareRepresentative: async (id: string) => {
-    try {
-      const response = await axiosInstance.delete(
-        `${API_ENDPOINTS.CUSTOMER_CARE_REPRESENTATIVES}/${id}`
-      );
-      return response.data;
-    } catch (error: any) {
-      console.error("Error deleting customer care representative:", error.message);
-      return null;
-    }
-  },
-
-  toggleCustomerCareStatus: async (id: string, available_for_work: boolean) => {
-    try {
-      const response = await axiosInstance.patch(
-        `${API_ENDPOINTS.CUSTOMER_CARE_REPRESENTATIVES}/${id}/status`,
-        { available_for_work }
-      );
-      return response.data;
-    } catch (error: any) {
-      console.error("Error toggling customer care status:", error.message);
-      return null;
-    }
-  }
 };
+
+// interface ApiResponse<T> {
+//   EC: number;
+//   EM: string;
+//   data: T;
+// }

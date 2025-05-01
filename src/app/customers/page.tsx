@@ -23,9 +23,25 @@ import {
   getCoreRowModel,
   flexRender,
 } from "@tanstack/react-table";
-import { customerService } from "@/services/companion-admin/customerService";
 import { Spinner } from "@/components/Spinner";
-import Image from "next/image";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatEpochToExactTime } from "@/utils/functions/formatTime";
+import IdCell from "@/components/IdCell";
+import { customerService } from "@/services/companion-admin/customerService";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import FallbackImage from "@/components/FallbackImage";
 
 interface Customer {
   id: string;
@@ -41,6 +57,60 @@ interface Customer {
   last_login: number;
 }
 
+interface OrderItem {
+  name: string;
+  item_id: string;
+  quantity: number;
+  variant_id: string;
+  price_at_time_of_order: number;
+  item?: {
+    id: string;
+    name: string;
+    price: string;
+    avatar?: {
+      key: string;
+      url: string;
+    };
+  };
+}
+
+interface Order {
+  id: string;
+  customer_id: string;
+  restaurant_id: string;
+  driver_id: string;
+  distance: string;
+  status: string;
+  total_amount: string;
+  delivery_fee: string;
+  payment_status: string;
+  payment_method: string;
+  customer_location: string;
+  restaurant_location: string;
+  order_items: OrderItem[];
+  customer_note: string;
+  restaurant_note: string;
+  order_time: string;
+  delivery_time: string;
+  tracking_info: string;
+  updated_at: number;
+  cancelled_by: string | null;
+  cancelled_by_id: string | null;
+  cancellation_reason: string | null;
+  cancellation_title: string | null;
+  cancellation_description: string | null;
+  cancelled_at: string | null;
+  restaurant: {
+    id: string;
+    address_id: string;
+    restaurant_name: string;
+    avatar?: {
+      key: string;
+      url: string;
+    };
+  };
+}
+
 const Page = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,6 +119,13 @@ const Page = () => {
     active: 0,
     inactive: 0,
   });
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  );
+  const [isOrderHistoryDialogOpen, setIsOrderHistoryDialogOpen] =
+    useState(false);
+  const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
+  const [isOrderHistoryLoading, setIsOrderHistoryLoading] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
@@ -56,9 +133,15 @@ const Page = () => {
   }, []);
 
   const fetchCustomers = async () => {
-    const result = await customerService.getAllCustomers();
-    if (result) {
-      setCustomers(result);
+    setIsLoading(true);
+    try {
+      const response = await customerService.getAllCustomers();
+      console.log("hceck res", response);
+      if (response.EC === 0) {
+        setCustomers(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching customers:", error);
     }
     setIsLoading(false);
   };
@@ -106,6 +189,30 @@ const Page = () => {
     }
   };
 
+  const fetchCustomerOrders = async (customerId: string) => {
+    setIsOrderHistoryLoading(true);
+    try {
+      const response = await customerService.getCustomerOrders(customerId);
+      console.log("cehc kres data", response);
+
+      const { EC, data } = response;
+      if (EC === 0) {
+        console.log("check bla", EC, data);
+        setCustomerOrders(data);
+      }
+    } catch (error) {
+      console.error("Error fetching customer orders:", error);
+    }
+    setIsOrderHistoryLoading(false);
+  };
+
+  const handleViewOrderHistory = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setIsOrderHistoryDialogOpen(true);
+    fetchCustomerOrders(customer.id);
+  };
+  console.log("check selceted what", customerOrders);
+
   const columns: ColumnDef<Customer>[] = [
     {
       id: "select",
@@ -145,7 +252,7 @@ const Page = () => {
         const customer = row.original;
         return (
           <div className="flex flex-row items-center gap-2">
-            <Image
+            <FallbackImage
               src={customer?.avatar?.url}
               alt="avatar"
               width={32}
@@ -202,8 +309,8 @@ const Page = () => {
               className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
               ${
                 Math.floor(Date.now() / 1000) - customer.last_login > 2592000
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-green-100 text-green-800"
               }`}
             >
               {Math.floor(Date.now() / 1000) - customer.last_login > 2592000
@@ -220,10 +327,6 @@ const Page = () => {
       header: "Actions",
       cell: ({ row }) => {
         const customer = row.original;
-        console.log(
-          "check cus",
-          Math.floor(Date.now() / 1000) - customer.last_login > 2592000
-        );
         return (
           <Popover>
             <PopoverTrigger asChild>
@@ -231,17 +334,15 @@ const Page = () => {
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-32">
+            <PopoverContent className="w-40">
               <div className="grid gap-4">
                 <Button
                   variant="ghost"
                   className="flex items-center justify-start"
-                  onClick={() => {
-                    // Handle view details
-                  }}
+                  onClick={() => handleViewOrderHistory(customer)}
                 >
                   <Eye className="mr-2 h-4 w-4" />
-                  Details
+                  Orders History
                 </Button>
                 <Button
                   variant="ghost"
@@ -349,6 +450,223 @@ const Page = () => {
           </Table>
         </div>
       </div>
+
+      <Dialog
+        open={isOrderHistoryDialogOpen}
+        onOpenChange={setIsOrderHistoryDialogOpen}
+      >
+        <DialogContent className="w-full max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Customer Order History</DialogTitle>
+            <DialogDescription>
+              View order history for {selectedCustomer?.first_name}{" "}
+              {selectedCustomer?.last_name}
+            </DialogDescription>
+          </DialogHeader>
+          <Spinner isVisible={isOrderHistoryLoading} isOverlay />
+
+          <div className="space-y-4">
+            {customerOrders.map((order) => {
+              const totalItems = order.order_items.reduce(
+                (sum, item) => sum + item.quantity,
+                0
+              );
+              const totalAmount = order.order_items.reduce(
+                (sum, item) =>
+                  sum + item.price_at_time_of_order * item.quantity,
+                0
+              );
+
+              return (
+                <Accordion type="single" collapsible key={order.id}>
+                  <AccordionItem value={order.id}>
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex flex-col items-start text-left">
+                        <div className="flex items-center gap-4">
+                          <span
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                              ${
+                                order.status === "DELIVERED"
+                                  ? "bg-green-100 text-green-800"
+                                  : order.status === "PENDING"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                          >
+                            {order.status}
+                          </span>
+                          <span className="text-sm font-medium">
+                            ${totalAmount.toFixed(2)}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {totalItems} items
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {formatEpochToExactTime(Number(order.order_time))}
+                          </span>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Order Information</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm font-medium">Order ID</p>
+                            <IdCell id={order.id} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">Status</p>
+                            <span
+                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                ${
+                                  order.status === "DELIVERED"
+                                    ? "bg-green-100 text-green-800"
+                                    : order.status === "PENDING"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                            >
+                              {order.status}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">Total Amount</p>
+                            <p className="text-sm text-muted-foreground">
+                              ${totalAmount.toFixed(2)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">Delivery Fee</p>
+                            <p className="text-sm text-muted-foreground">
+                              ${order.delivery_fee}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">
+                              Payment Status
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {order.payment_status}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">
+                              Payment Method
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {order.payment_method}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">Order Time</p>
+                            <p className="text-sm text-muted-foreground">
+                              {formatEpochToExactTime(Number(order.order_time))}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">Delivery Time</p>
+                            <p className="text-sm text-muted-foreground">
+                              {formatEpochToExactTime(
+                                Number(order.delivery_time)
+                              )}
+                            </p>
+                          </div>
+                        </CardContent>
+
+                        <CardHeader>
+                          <CardTitle>Order Items</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          {order.order_items.map(
+                            (item: OrderItem, index: number) => (
+                              <div
+                                key={index}
+                                className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 bg-white rounded-md border hover:shadow-md transition-shadow"
+                              >
+                                {item?.item?.avatar ? (
+                                  <FallbackImage
+                                    src={item.item.avatar.url}
+                                    alt={`${item.name} avatar`}
+                                    width={48}
+                                    height={48}
+                                    className="rounded-sm aspect-square object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-xs">
+                                    No Image
+                                  </div>
+                                )}
+                                <div className="flex-1 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <p className="text-sm font-semibold">
+                                      {item.name}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                      Price: $
+                                      {item.price_at_time_of_order.toFixed(2)} x{" "}
+                                      {item.quantity}
+                                    </p>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                    <div className="flex-1">
+                                      <p className="text-xs font-medium text-gray-500">
+                                        Item ID
+                                      </p>
+                                      <IdCell id={item.item_id} />
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="text-xs font-medium text-gray-500">
+                                        Variant ID
+                                      </p>
+                                      <IdCell id={item.variant_id} />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          )}
+                        </CardContent>
+
+                        <CardHeader>
+                          <CardTitle>Restaurant Information</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex items-center gap-4">
+                            {order.restaurant?.avatar && (
+                              <FallbackImage
+                                src={order.restaurant.avatar.url}
+                                alt="Restaurant Avatar"
+                                width={40}
+                                height={40}
+                                className="rounded-full"
+                              />
+                            )}
+                            <div>
+                              <p className="text-sm font-medium">Name</p>
+                              <p className="text-sm text-muted-foreground">
+                                {order.restaurant?.restaurant_name}
+                              </p>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">Restaurant ID</p>
+                            <p className="text-sm text-muted-foreground">
+                              {order.restaurant?.id}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
