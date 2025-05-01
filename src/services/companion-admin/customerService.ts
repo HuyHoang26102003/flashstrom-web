@@ -67,6 +67,12 @@ export const customerService = {
       return [];
     }
   },
+  findAllComplaintHistory: async (customerId: string) => {
+    const response = await axiosInstance.get(
+      `customer-care-inquiries/customer/${customerId}`
+    );
+    return response.data;
+  },
 };
 
 // interface ApiResponse<T> {

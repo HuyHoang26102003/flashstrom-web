@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useAdminStore } from "@/stores/adminStore";
 // import { API_BASE_URL } from '@/utils/constants/api';
 
 const axiosInstance = axios.create({
@@ -15,6 +16,10 @@ const axiosInstance = axios.create({
 // Request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
+    const adminStore = useAdminStore.getState();
+    if (adminStore.user?.accessToken) {
+      config.headers.Authorization = `Bearer ${adminStore.user.accessToken}`;
+    }
     return config;
   },
   (error) => {
@@ -31,10 +36,15 @@ axiosInstance.interceptors.response.use(
     if (error.response) {
       switch (error.response.status) {
         case 401:
+          // Handle unauthorized access
+          const adminStore = useAdminStore.getState();
+          adminStore.logout();
           break;
         case 403:
+          // Handle forbidden access
           break;
         case 404:
+          // Handle not found
           break;
         default:
           break;

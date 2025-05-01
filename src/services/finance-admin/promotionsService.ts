@@ -10,6 +10,13 @@ export const promotionsService = {
     return response.data;
   },
 
+  getDetailPromotion: async (id: string) => {
+    const response = await axiosInstance.get(
+      `finance-admin${API_ENDPOINTS.PROMOTIONS}/${id}`
+    );
+    return response.data;
+  },
+
   createPromotion: async (promotion: Omit<Promotion, "id">) => {
     const response = await axiosInstance.post(
       `finance-admin${API_ENDPOINTS.PROMOTIONS}`,

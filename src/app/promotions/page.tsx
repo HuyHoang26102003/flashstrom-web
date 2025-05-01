@@ -40,6 +40,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import axios from "axios";
+import { Spinner } from "@/components/Spinner";
+import FallbackImage from "@/components/FallbackImage";
+import { Card, CardContent } from "@/components/ui/card";
+import IdCell from "@/components/IdCell";
 
 export type Promotion = {
   id: string;
@@ -59,6 +63,42 @@ export type Promotion = {
   avatar?: { url: string; key: string };
 };
 
+// Add this interface before the Page component
+interface PromotionDetails {
+  id: string;
+  name: string;
+  description: string;
+  start_date: string;
+  end_date: string;
+  discount_type: "PERCENTAGE" | "FIXED";
+  discount_value: string;
+  promotion_cost_price: string;
+  minimum_order_value: string;
+  avatar?: {
+    key: string;
+    url: string;
+  };
+  status: "ACTIVE" | "INACTIVE";
+  bogo_details: null | {
+    buy_quantity: number;
+    get_quantity: number;
+    item_id: string;
+  };
+  created_at: string;
+  updated_at: string;
+  restaurants?: {
+    id: string;
+    restaurant_name: string;
+    avatar?: {
+      key: string;
+      url: string;
+    };
+    status: {
+      is_active: boolean;
+    };
+  }[];
+}
+
 const data: Promotion[] = [
   {
     id: "m5gr84i9",
@@ -75,155 +115,7 @@ const data: Promotion[] = [
   },
 ];
 
-export const columns: ColumnDef<Promotion>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "name",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Promotion Name
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => (
-      <div className="text-center">{row.getValue("name")}</div>
-    ),
-  },
-  {
-    accessorKey: "cost",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Cost
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("cost"));
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-      }).format(amount);
-      return <div className="font-medium text-center">{formatted}</div>;
-    },
-  },
-  {
-    accessorKey: "startDate",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Start Date
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const timestamp = row.getValue("startDate") as number;
-      const date = new Date(timestamp * 1000);
-      return (
-        <div className="text-center">{date.toLocaleDateString("en-GB")}</div>
-      );
-    },
-  },
-  {
-    accessorKey: "endDate",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        End Date
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const timestamp = row.getValue("endDate") as number;
-      const date = new Date(timestamp * 1000);
-      return (
-        <div className="text-center">{date.toLocaleDateString("en-GB")}</div>
-      );
-    },
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    header: () => <Button variant="ghost">Actions</Button>,
-    cell: ({ row }) => {
-      const promotion = row.original;
-      return (
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="ghost" className="h-8 w-full p-0 text-center">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-32">
-            <div className="grid gap-4">
-              <Button
-                variant="ghost"
-                className="flex items-center justify-start"
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                Details
-              </Button>
-              <Button
-                variant="ghost"
-                className="flex items-center justify-start"
-              >
-                <Power className="mr-2 h-4 w-4" />
-                Inactivate
-              </Button>
-              <Button
-                variant="ghost"
-                className="flex items-center justify-start"
-                onClick={() => handleEdit(promotion)}
-              >
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
-              <Button
-                variant="ghost"
-                className="flex items-center justify-start text-destructive"
-              >
-                <Trash className="mr-2 h-4 w-4" />
-                Delete
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
-      );
-    },
-  },
-];
-
-const page = () => {
+const Page = () => {
   const [listPromotions, setListPromotions] = useState<Promotion[]>([]);
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(
     null
@@ -231,6 +123,175 @@ const page = () => {
   const [newPromotion, setNewPromotion] = useState<Promotion | null>(null);
   const [openEdit, setOpenEdit] = useState<boolean>(false);
   const [openAdd, setOpenAdd] = useState<boolean>(false);
+  const [openDetails, setOpenDetails] = useState<boolean>(false);
+  const [selectedPromotionDetails, setSelectedPromotionDetails] =
+    useState<PromotionDetails | null>(null);
+  const [isDetailsLoading, setIsDetailsLoading] = useState<boolean>(false);
+
+  // Handle fetch promotion details
+  const handleViewDetails = async (promotionId: string) => {
+    setIsDetailsLoading(true);
+    try {
+      const response = await promotionsService.getDetailPromotion(promotionId);
+      if (response.EC === 0) {
+        setSelectedPromotionDetails(response.data);
+        setOpenDetails(true);
+      }
+    } catch (error) {
+      console.error("Error fetching promotion details:", error);
+    }
+    setIsDetailsLoading(false);
+  };
+
+  const columns: ColumnDef<Promotion>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "name",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Promotion Name
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <div className="text-center">{row.getValue("name")}</div>
+      ),
+    },
+    {
+      accessorKey: "cost",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Cost
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const amount = parseFloat(row.getValue("cost"));
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(amount);
+        return <div className="font-medium text-center">{formatted}</div>;
+      },
+    },
+    {
+      accessorKey: "startDate",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Start Date
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const timestamp = row.getValue("startDate") as number;
+        const date = new Date(timestamp * 1000);
+        return (
+          <div className="text-center">{date.toLocaleDateString("en-GB")}</div>
+        );
+      },
+    },
+    {
+      accessorKey: "endDate",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          End Date
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const timestamp = row.getValue("endDate") as number;
+        const date = new Date(timestamp * 1000);
+        return (
+          <div className="text-center">{date.toLocaleDateString("en-GB")}</div>
+        );
+      },
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      header: () => <Button variant="ghost">Actions</Button>,
+      cell: ({ row }) => {
+        const promotion = row.original;
+        console.log("chec kpromotion what", promotion);
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" className="h-8 w-full p-0 text-center">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-32">
+              <div className="grid gap-4">
+                <Button
+                  variant="ghost"
+                  className="flex items-center justify-start"
+                  onClick={() => handleViewDetails(promotion.id)}
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  Details
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="flex items-center justify-start"
+                >
+                  <Power className="mr-2 h-4 w-4" />
+                  Inactivate
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="flex items-center justify-start"
+                  onClick={() => handleEdit(promotion)}
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="flex items-center justify-start text-destructive"
+                >
+                  <Trash className="mr-2 h-4 w-4" />
+                  Delete
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+        );
+      },
+    },
+  ];
 
   const table = useReactTable({
     data: listPromotions,
@@ -244,7 +305,7 @@ const page = () => {
       .then((res) => {
         setListPromotions(
           res.data.map((item: any) => ({
-            id: item._id,
+            id: item.id,
             name: item.name,
             description: item.description,
             cost: item.promotion_cost_price,
@@ -260,6 +321,7 @@ const page = () => {
         );
       })
       .catch((err) => {
+        console.log("check er", err);
         setListPromotions(data);
       });
   }, []);
@@ -437,7 +499,7 @@ const page = () => {
       {/* Modal chỉnh sửa Promotion */}
       {selectedPromotion && (
         <Dialog open={openEdit} onOpenChange={setOpenEdit}>
-          <DialogContent className="h-[90vh] w-screen overflow-y-scroll">
+          <DialogContent className="h-[90vh] w-full overflow-y-scroll">
             <DialogHeader>
               <DialogTitle>Edit Promotion - {selectedPromotion.id}</DialogTitle>
             </DialogHeader>
@@ -621,7 +683,9 @@ const page = () => {
                     }
                   />
                   {selectedPromotion.avatar && (
-                    <img
+                    <FallbackImage
+                      height={32}
+                      width={32}
                       src={selectedPromotion.avatar.url}
                       alt="preview"
                       className="w-12 h-12 rounded-md"
@@ -646,7 +710,7 @@ const page = () => {
       {/* Modal thêm Promotion mới */}
       {newPromotion && (
         <Dialog open={openAdd} onOpenChange={setOpenAdd}>
-          <DialogContent className="h-[90vh] w-screen overflow-y-scroll">
+          <DialogContent className="h-[90vh] w-full overflow-y-scroll">
             <DialogHeader>
               <DialogTitle>Add New Promotion</DialogTitle>
             </DialogHeader>
@@ -830,8 +894,10 @@ const page = () => {
                     }
                   />
                   {newPromotion.avatar && (
-                    <img
-                      src={newPromotion.avatar.url}
+                    <FallbackImage
+                      height={32}
+                      width={32}
+                      src={selectedPromotion?.avatar?.url}
                       alt="preview"
                       className="w-12 h-12 rounded-md"
                     />
@@ -851,8 +917,179 @@ const page = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Modal Details Promotion */}
+      <Dialog open={openDetails} onOpenChange={setOpenDetails}>
+        <DialogContent className="h-[90vh] w-full overflow-y-scroll">
+          <DialogHeader>
+            <DialogTitle>Promotion Details</DialogTitle>
+          </DialogHeader>
+          <Spinner isVisible={isDetailsLoading} isOverlay />
+          {selectedPromotionDetails && (
+            <>
+              <div className="grid grid-cols-2 gap-4 py-4">
+                <div className="">
+                  <Label className="text-right font-semibold">Name</Label>
+                  <div className="col-span-3">
+                    {selectedPromotionDetails.name}
+                  </div>
+                </div>
+                <div className="">
+                  <Label className="text-right font-semibold">
+                    Description
+                  </Label>
+                  <div className="col-span-3">
+                    {selectedPromotionDetails.description}
+                  </div>
+                </div>
+                <div className="">
+                  <Label className="text-right font-semibold">Cost</Label>
+                  <div className="col-span-3">
+                    ${selectedPromotionDetails.promotion_cost_price}
+                  </div>
+                </div>
+                <div className="">
+                  <Label className="text-right font-semibold">
+                    Discount Type
+                  </Label>
+                  <div className="col-span-3">
+                    {selectedPromotionDetails.discount_type}
+                  </div>
+                </div>
+                <div className="">
+                  <Label className="text-right font-semibold">Start Date</Label>
+                  <div className="col-span-3">
+                    {new Date(
+                      Number(selectedPromotionDetails.start_date) * 1000
+                    ).toLocaleDateString()}
+                  </div>
+                </div>
+                <div className="">
+                  <Label className="text-right font-semibold">End Date</Label>
+                  <div className="col-span-3">
+                    {new Date(
+                      Number(selectedPromotionDetails.end_date) * 1000
+                    ).toLocaleDateString()}
+                  </div>
+                </div>
+                <div className="">
+                  <Label className="text-right font-semibold">
+                    Discount Value
+                  </Label>
+                  <div className="col-span-3">
+                    {selectedPromotionDetails.discount_type === "PERCENTAGE"
+                      ? `${selectedPromotionDetails.discount_value}%`
+                      : `$${selectedPromotionDetails.discount_value}`}
+                  </div>
+                </div>
+                <div className="">
+                  <Label className="text-right font-semibold">
+                    Minimum Order Value
+                  </Label>
+                  <div className="col-span-3">
+                    ${selectedPromotionDetails.minimum_order_value}
+                  </div>
+                </div>
+                <div className="">
+                  <Label className="text-right font-semibold">Status</Label>
+                  <div className="col-span-3">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        selectedPromotionDetails.status === "ACTIVE"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {selectedPromotionDetails.status}
+                    </span>
+                  </div>
+                </div>
+                {selectedPromotionDetails.avatar && (
+                  <div className="">
+                    <Label className="text-right font-semibold">Avatar</Label>
+                    <div className="col-span-3">
+                      <FallbackImage
+                        height={32}
+                        width={64}
+                        src={selectedPromotionDetails.avatar.url}
+                        alt="preview"
+                        className=" rounded-md"
+                      />
+                    </div>
+                  </div>
+                )}
+                <div className="">
+                  <Label className="text-right font-semibold">Created At</Label>
+                  <div className="col-span-3">
+                    {new Date(
+                      selectedPromotionDetails.created_at
+                    ).toLocaleString()}
+                  </div>
+                </div>
+                <div className="">
+                  <Label className="text-right font-semibold">Updated At</Label>
+                  <div className="col-span-3">
+                    {new Date(
+                      selectedPromotionDetails.updated_at
+                    ).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+
+              {selectedPromotionDetails.restaurants &&
+                selectedPromotionDetails.restaurants.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold mb-4">
+                      Participating Restaurants
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {selectedPromotionDetails.restaurants.map(
+                        (restaurant) => (
+                          <Card key={restaurant.id}>
+                            <CardContent className="p-4">
+                              <div className="flex items-center gap-4">
+                                {restaurant.avatar && (
+                                  <FallbackImage
+                                    src={restaurant.avatar.url}
+                                    alt={restaurant.restaurant_name}
+                                    width={48}
+                                    height={48}
+                                    className="rounded-full"
+                                  />
+                                )}
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between">
+                                    <p className="font-medium">
+                                      {restaurant.restaurant_name}
+                                    </p>
+                                    <span
+                                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                        restaurant.status.is_active
+                                          ? "bg-green-100 text-green-800"
+                                          : "bg-red-100 text-red-800"
+                                      }`}
+                                    >
+                                      {restaurant.status.is_active
+                                        ? "Active"
+                                        : "Inactive"}
+                                    </span>
+                                  </div>
+                                  <IdCell id={restaurant.id} />
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-export default page;
+export default Page;

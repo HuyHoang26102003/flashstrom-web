@@ -7,4 +7,5 @@ export const API_ENDPOINTS = {
   INQUIRIES: "/inquiries",
   CUSTOMER_CARE_INQUIRIES: "/customer-care-inquiries",
   ORDERS: "/orders",
+  ADMIN: "/admin",
 };

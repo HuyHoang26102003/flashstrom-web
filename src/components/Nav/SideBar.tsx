@@ -41,7 +41,10 @@ const SideBar = () => {
 
     switch (loggedInAs) {
       case "SUPER_ADMIN":
-        return AD_ADMIN_SIDEBAR_ITEMS;
+        return [
+          ...AD_ADMIN_SIDEBAR_ITEMS,
+          { title: "Admin Management", link: "/admin" },
+        ];
       case "COMPANION_ADMIN":
         return AD_ADMIN_SIDEBAR_ITEMS.filter(
           (item) =>
