@@ -34,7 +34,7 @@ export const AD_ADMIN_SIDEBAR_ITEMS: sideBarItem[] = [
       },
       {
         title: "Customer Care Reports",
-        link: "/cc/reports",
+        link: "/cc/inquiries",
       },
     ],
   },

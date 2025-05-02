@@ -8,6 +8,12 @@ export const inquiryService = {
     );
     return response.data;
   },
+  getAllEscalatedInquiries: async () => {
+    const response = await axiosInstance.get(
+      `${API_ENDPOINTS.CUSTOMER_CARE_INQUIRIES}/escalated`
+    );
+    return response.data;
+  },
 
   //   createPromotion: async (promotion: Omit<Promotion, "id">) => {
   //     const response = await axiosInstance.post(
