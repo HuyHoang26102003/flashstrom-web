@@ -321,7 +321,7 @@ const Page = () => {
   useEffect(() => {
     const totalCount = restaurants.length;
     const activeCount = restaurants.filter((r) => r.isActive).length;
-    const bannedCount = restaurants.filter((r) => !r.isActive).length;
+    const bannedCount = restaurants.filter((r) => r.is_banned).length;
 
     setStats({
       total: totalCount,

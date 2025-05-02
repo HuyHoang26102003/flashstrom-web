@@ -210,7 +210,7 @@ const Page = () => {
         (cc: { available_for_work: boolean }) => cc.available_for_work
       ).length;
       const bannedCount = careData.filter(
-        (cc: { available_for_work: boolean }) => !cc.available_for_work
+        (cc: { is_banned: boolean }) => cc.is_banned
       ).length;
 
       setStats({

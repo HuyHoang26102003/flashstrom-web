@@ -11,6 +11,7 @@ export interface Restaurant {
   cuisine: string;
   rating?: number;
   isActive: boolean;
+  is_banned: boolean;
 }
 
 interface MenuItem {

@@ -22,7 +22,142 @@ export interface Driver {
   contact_email: {
     email: string;
   }[];
+  is_banned: boolean;
 }
+
+export interface DriverOrder {
+  id: string;
+  customer_id: string;
+  restaurant_id: string;
+  driver_id: string;
+  distance: string;
+  status: string;
+  total_amount: string;
+  delivery_fee: string;
+  payment_status: string;
+  payment_method: string;
+  customer_location: string;
+  restaurant_location: string;
+  order_items: {
+    name: string;
+    item_id: string;
+    quantity: number;
+    variant_id: string;
+    price_at_time_of_order: number;
+    menu_item: {
+      id: string;
+      name: string;
+      price: string;
+      avatar: {
+        key: string;
+        url: string;
+      };
+      restaurant: {
+        id: string;
+        address_id: string;
+        restaurant_name: string;
+        avatar: {
+          key: string;
+          url: string;
+        } | null;
+      };
+    };
+  }[];
+  customer_note: string;
+  restaurant_note: string;
+  order_time: string;
+  delivery_time: string;
+  tracking_info: string;
+  updated_at: number;
+  cancelled_by: string | null;
+  cancelled_by_id: string | null;
+  cancellation_reason: string | null;
+  cancellation_title: string | null;
+  cancellation_description: string | null;
+  cancelled_at: string | null;
+  restaurant: {
+    id: string;
+    address_id: string;
+    restaurant_name: string;
+    avatar: {
+      key: string;
+      url: string;
+    } | null;
+    specialize_in: string[];
+  };
+  customer: {
+    id: string;
+    user_id: string;
+    first_name: string;
+    last_name: string;
+    phone: string | null;
+    avatar: {
+      key: string;
+      url: string;
+    };
+  };
+  restaurantAddress: {
+    id: string;
+    street: string;
+    city: string;
+    nationality: string;
+    is_default: boolean;
+    created_at: number;
+    updated_at: number;
+    postal_code: number;
+    location: {
+      lat: number;
+      lng: number;
+    };
+    title: string;
+  };
+  customerAddress: {
+    id: string;
+    street: string;
+    city: string;
+    nationality: string;
+    is_default: boolean;
+    created_at: number;
+    updated_at: number;
+    postal_code: number;
+    location: {
+      lat: number;
+      lng: number;
+    };
+    title: string;
+  };
+  customer_address: {
+    id: string;
+    street: string;
+    city: string;
+    nationality: string;
+    is_default: boolean;
+    created_at: number;
+    updated_at: number;
+    postal_code: number;
+    location: {
+      lat: number;
+      lng: number;
+    };
+    title: string;
+  };
+  restaurant_address: {
+    id: string;
+    street: string;
+    city: string;
+    nationality: string;
+    is_default: boolean;
+    created_at: number;
+    updated_at: number;
+    postal_code: number;
+    location: {
+      lat: number;
+      lng: number;
+    };
+    title: string;
+  };
+}
+
 export const driverService = {
   getAllDrivers: async () => {
     const response = await axiosInstance.get(
@@ -31,12 +166,27 @@ export const driverService = {
     return response.data;
   },
 
-    createDriver: async () => {
-      const response = await axiosInstance.post(
-        `companion-admin${API_ENDPOINTS.DRIVERS}`
-      );
-      return response.data;
-    },
+  createDriver: async () => {
+    const response = await axiosInstance.post(
+      `companion-admin${API_ENDPOINTS.DRIVERS}`
+    );
+    return response.data;
+  },
+
+  getDriverOrders: async (driverId: string) => {
+    const response = await axiosInstance.get(
+      `${API_ENDPOINTS.DRIVERS}/orders/${driverId}`
+    );
+    return response.data;
+  },
+
+  updateDriverStatus: async (driverId: string, isBanned: boolean) => {
+    const response = await axiosInstance.patch(
+      `${API_ENDPOINTS.DRIVERS}/${driverId}/status`,
+      { is_banned: isBanned }
+    );
+    return response.data;
+  },
 
   // updatePromotion: async (id: string, promotion: Partial<Promotion>) => {
   //     const response = await axiosInstance.put(`${API_ENDPOINTS.PROMOTIONS}/${id}`, promotion);

@@ -16,6 +16,7 @@ export interface CustomerCare {
   contact_email: {
     email: string;
   }[];
+  is_banned: boolean;
 }
 
 export const customerCareService = {
