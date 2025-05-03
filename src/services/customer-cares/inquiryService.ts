@@ -8,6 +8,29 @@ export const inquiryService = {
     );
     return response.data;
   },
+
+  findAllPaginated: async (limit?: number, offset?: number) => {
+    try {
+      const response = await axiosInstance.get(
+        `${API_ENDPOINTS.CUSTOMER_CARE_INQUIRIES}/paginated`,
+        {
+          params: {
+            limit,
+            offset,
+          },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("Error fetching paginated inquiries:", error.message);
+      return {
+        EC: 1,
+        EM: "Error fetching inquiries",
+        data: { items: [], totalPages: 0, currentPage: 0, totalItems: 0 },
+      };
+    }
+  },
+
   getAllEscalatedInquiries: async () => {
     const response = await axiosInstance.get(
       `${API_ENDPOINTS.CUSTOMER_CARE_INQUIRIES}/escalated`

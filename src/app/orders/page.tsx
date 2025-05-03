@@ -54,10 +54,10 @@ const Page = () => {
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
-      const response = await orderService.getAllOrders();
+      const response = await orderService.findAllPaginated();
       const { EC, data } = response.data;
       if (EC === 0) {
-        setOrders(data);
+        setOrders(data.items);
       }
     } catch (error) {
       console.error("Error fetching orders:", error);

@@ -59,8 +59,10 @@ export default function DriversPage() {
     setIsLoading(true);
     const fetchDrivers = async () => {
       try {
-        const response = await driverService.getAllDrivers();
-        setDrivers(response.data);
+        const response = await driverService.findAllPaginated();
+        if (response.data.EC === 0) {
+          setDrivers(response.data.items);
+        }
       } catch (error) {
         console.error("Error fetching drivers:", error);
         setDrivers([]);

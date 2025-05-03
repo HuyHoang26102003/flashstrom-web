@@ -31,6 +31,29 @@ export const customerService = {
       return [];
     }
   },
+
+  findAllPaginated: async (limit?: number, offset?: number) => {
+    try {
+      const response = await axiosInstance.get(
+        `${API_ENDPOINTS.CUSTOMERS}/paginated`,
+        {
+          params: {
+            limit,
+            offset,
+          },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("Error fetching paginated customers:", error.message);
+      return {
+        EC: 1,
+        EM: "Error fetching customers",
+        data: { items: [], totalPages: 0, currentPage: 0, totalItems: 0 },
+      };
+    }
+  },
+
   createCustomer: async () => {
     try {
       const response = await axiosInstance.post(API_ENDPOINTS.CUSTOMERS, {

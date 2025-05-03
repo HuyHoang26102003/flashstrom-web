@@ -294,19 +294,22 @@ const Page = () => {
   }, []);
 
   const fetchRestaurants = async () => {
-    const result = restaurantService.getAllRestaurants();
+    const result = restaurantService.findAllPaginated();
     result
       .then((res) => {
         const responseData = res.data;
-        const buildData = responseData.map((item: ItemRestaurantBackend) => ({
-          id: item.id,
-          name: item.restaurant_name,
-          address: `${item.address.street} ${item.address.city} ${item.address.nationality}`,
-          cuisine: "",
-          isActive: item.status.is_active,
-          rating: undefined,
-          avatar: item?.avatar,
-        }));
+        console.log("check what here", responseData);
+        const buildData = responseData.items.map(
+          (item: ItemRestaurantBackend) => ({
+            id: item.id,
+            name: item.restaurant_name,
+            address: `${item.address.street} ${item.address.city} ${item.address.nationality}`,
+            cuisine: "",
+            isActive: item.status.is_active,
+            rating: undefined,
+            avatar: item?.avatar,
+          })
+        );
         setRestaurants(buildData);
       })
       .catch((err) => {

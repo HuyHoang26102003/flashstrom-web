@@ -36,6 +36,31 @@ export const customerCareService = {
     }
   },
 
+  findAllPaginated: async (limit?: number, offset?: number) => {
+    try {
+      const response = await axiosInstance.get(
+        `${API_ENDPOINTS.CUSTOMER_CARE_REPRESENTATIVES}/paginated`,
+        {
+          params: {
+            limit,
+            offset,
+          },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error(
+        "Error fetching paginated customer care representatives:",
+        error.message
+      );
+      return {
+        EC: 1,
+        EM: "Error fetching customer care representatives",
+        data: { items: [], totalPages: 0, currentPage: 0, totalItems: 0 },
+      };
+    }
+  },
+
   createCustomerCareRepresentative: async () => {
     try {
       const response = await axiosInstance.post(

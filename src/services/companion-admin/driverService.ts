@@ -166,6 +166,28 @@ export const driverService = {
     return response.data;
   },
 
+  findAllPaginated: async (limit?: number, offset?: number) => {
+    try {
+      const response = await axiosInstance.get(
+        `${API_ENDPOINTS.DRIVERS}/paginated`,
+        {
+          params: {
+            limit,
+            offset,
+          },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("Error fetching paginated drivers:", error.message);
+      return {
+        EC: 1,
+        EM: "Error fetching drivers",
+        data: { items: [], totalPages: 0, currentPage: 0, totalItems: 0 },
+      };
+    }
+  },
+
   createDriver: async () => {
     const response = await axiosInstance.post(
       `companion-admin${API_ENDPOINTS.DRIVERS}`

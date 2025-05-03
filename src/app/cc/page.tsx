@@ -190,8 +190,7 @@ const Page = () => {
   const fetchCustomerCare = async () => {
     setIsLoading(true);
     try {
-      const result =
-        await customerCareService.getAllCustomerCareRepresentatives();
+      const result = await customerCareService.findAllPaginated();
       console.log("Result from API:", result);
 
       // Handle both array and object with data property
@@ -202,7 +201,7 @@ const Page = () => {
         : [];
 
       console.log("Processed data:", careData);
-      setCustomerCare(careData);
+      setCustomerCare(careData.items);
 
       // Calculate statistics
       const totalCount = careData.length;

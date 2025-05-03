@@ -6,6 +6,29 @@ export const orderService = {
     const response = await axiosInstance.get(`${API_ENDPOINTS.ORDERS}`);
     return response.data;
   },
+
+  findAllPaginated: async (limit?: number, offset?: number) => {
+    try {
+      const response = await axiosInstance.get(
+        `${API_ENDPOINTS.ORDERS}/paginated`,
+        {
+          params: {
+            limit,
+            offset,
+          },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("Error fetching paginated orders:", error.message);
+      return {
+        EC: 1,
+        EM: "Error fetching orders",
+        data: { items: [], totalPages: 0, currentPage: 0, totalItems: 0 },
+      };
+    }
+  },
+
   findOrderById: async (id: string) => {
     const response = await axiosInstance.get(`${API_ENDPOINTS.ORDERS}/${id}`);
     return response.data;

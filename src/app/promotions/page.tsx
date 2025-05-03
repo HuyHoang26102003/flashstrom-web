@@ -300,11 +300,11 @@ const Page = () => {
   });
 
   useEffect(() => {
-    const result = promotionsService.getAllPromotions();
+    const result = promotionsService.findAllPaginated();
     result
       .then((res) => {
         setListPromotions(
-          res.data.map((item: any) => ({
+          res.data.items.map((item: any) => ({
             id: item.id,
             name: item.name,
             description: item.description,

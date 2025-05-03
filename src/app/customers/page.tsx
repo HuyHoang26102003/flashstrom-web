@@ -184,10 +184,11 @@ const Page = () => {
   const fetchCustomers = async () => {
     setIsLoading(true);
     try {
-      const response = await customerService.getAllCustomers();
+      const response = await customerService.findAllPaginated();
       console.log("hceck res", response);
       if (response.EC === 0) {
-        setCustomers(response.data);
+        console.log("check repsosne", response.data);
+        setCustomers(response.data.items);
       }
     } catch (error) {
       console.error("Error fetching customers:", error);

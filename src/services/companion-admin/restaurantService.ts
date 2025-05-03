@@ -14,45 +14,66 @@ export interface Restaurant {
   is_banned: boolean;
 }
 
-interface MenuItem {
-  id: string;
-  restaurant_id: string;
-  name: string;
-  description: string;
-  price: string;
-  category: string[];
-  avatar: {
-    key: string;
-    url: string;
-  };
-  availability: boolean;
-  suggest_notes: string[];
-  discount: string | null;
-  purchase_count: number;
-  created_at: number;
-  updated_at: number;
-  variants: {
-    id: string;
-    menu_id: string;
-    variant: string;
-    description: string;
-    avatar: {
-      key: string;
-      url: string;
-    };
-    availability: boolean;
-    default_restaurant_notes: string[];
-    price: string;
-    discount_rate: string;
-    created_at: number;
-    updated_at: number;
-  }[];
-}
+// interface MenuItem {
+//   id: string;
+//   restaurant_id: string;
+//   name: string;
+//   description: string;
+//   price: string;
+//   category: string[];
+//   avatar: {
+//     key: string;
+//     url: string;
+//   };
+//   availability: boolean;
+//   suggest_notes: string[];
+//   discount: string | null;
+//   purchase_count: number;
+//   created_at: number;
+//   updated_at: number;
+//   variants: {
+//     id: string;
+//     menu_id: string;
+//     variant: string;
+//     description: string;
+//     avatar: {
+//       key: string;
+//       url: string;
+//     };
+//     availability: boolean;
+//     default_restaurant_notes: string[];
+//     price: string;
+//     discount_rate: string;
+//     created_at: number;
+//     updated_at: number;
+//   }[];
+// }
 
 export const restaurantService = {
   getAllRestaurants: async () => {
     const response = await axiosInstance.get(`${API_ENDPOINTS.RESTAURANTS}`);
     return response.data;
+  },
+  findAllPaginated: async (limit?: number, offset?: number) => {
+    try {
+      const response = await axiosInstance.get(
+        `${API_ENDPOINTS.RESTAURANTS}/paginated`,
+        {
+          params: {
+            limit,
+            offset,
+          },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("Error fetching paginated restaurants:", error.message);
+      return {
+        EC: 1,
+        EM: "Error fetching restaurants",
+        data: { items: [], totalPages: 0, currentPage: 0, totalItems: 0 },
+      };
+    }
   },
 
   createRestaurant: async () => {
