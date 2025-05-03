@@ -166,14 +166,14 @@ export const driverService = {
     return response.data;
   },
 
-  findAllPaginated: async (limit?: number, offset?: number) => {
+  findAllPaginated: async (limit?: number, page?: number) => {
     try {
       const response = await axiosInstance.get(
         `${API_ENDPOINTS.DRIVERS}/paginated`,
         {
           params: {
             limit,
-            offset,
+            page,
           },
         }
       );

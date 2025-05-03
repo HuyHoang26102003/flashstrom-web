@@ -55,7 +55,8 @@ const Page = () => {
     setIsLoading(true);
     try {
       const response = await orderService.findAllPaginated();
-      const { EC, data } = response.data;
+      const { EC, data } = response;
+      // console.log("check whawte here", data);
       if (EC === 0) {
         setOrders(data.items);
       }
@@ -392,7 +393,7 @@ const Page = () => {
                   <div>
                     <p className="text-sm font-medium">Total Amount</p>
                     <p className="text-sm text-muted-foreground">
-                      ${selectedOrder.total_amount}
+                      ${Number(selectedOrder.total_amount).toFixed(2)}
                     </p>
                   </div>
                   <div>

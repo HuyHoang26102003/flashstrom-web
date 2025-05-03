@@ -7,14 +7,14 @@ export const orderService = {
     return response.data;
   },
 
-  findAllPaginated: async (limit?: number, offset?: number) => {
+  findAllPaginated: async (limit?: number, page?: number) => {
     try {
       const response = await axiosInstance.get(
         `${API_ENDPOINTS.ORDERS}/paginated`,
         {
           params: {
             limit,
-            offset,
+            page,
           },
         }
       );

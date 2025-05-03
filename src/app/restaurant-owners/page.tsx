@@ -45,6 +45,14 @@ import {
 } from "@/components/ui/accordion";
 import { Avatar } from "@/types/common";
 import FallbackImage from "@/components/FallbackImage";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface ItemRestaurantBackend {
   id: string;
@@ -106,6 +114,9 @@ const Page = () => {
   const [isMenuItemsDialogOpen, setIsMenuItemsDialogOpen] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isMenuItemsLoading, setIsMenuItemsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   const handleStatusChange = async (id: string, isActive: boolean) => {
     try {
@@ -172,12 +183,12 @@ const Page = () => {
           <div className="flex items-center gap-2">
             <FallbackImage
               src={restaurant?.avatar?.url}
-              alt={restaurant.name}
+              alt={restaurant.restaurant_name}
               width={32}
               height={32}
               className="rounded-sm aspect-square object-cover"
             />
-            <div className="text-left">{restaurant.name}</div>
+            <div className="text-left">{restaurant.restaurant_name}</div>
           </div>
         );
       },
@@ -204,11 +215,13 @@ const Page = () => {
           return <div className="text-center">-</div>;
         }
 
-        const addressStr = address.toString();
+        const addressStr = `${(address as { street: string }).street}, ${
+          (address as { city: string }).city
+        } ${(address as { nationality: string }).nationality}`;
         return (
           <div className="text-left">
-            {addressStr.length > 30
-              ? `${addressStr.slice(0, 30)}...`
+            {addressStr.length > 20
+              ? `${addressStr.slice(0, 20)}...`
               : addressStr}
           </div>
         );
@@ -290,15 +303,60 @@ const Page = () => {
 
   useEffect(() => {
     setIsLoading(true);
-    fetchRestaurants();
-  }, []);
+    const fetchDrivers = async () => {
+      try {
+        console.log("Fetching page:", currentPage);
+        const response = await restaurantService.findAllPaginated(
+          10,
+          currentPage
+        );
+        const {
+          totalItems: items,
+          totalPages: pages,
+          items: restaurantItems,
+        } = response.data;
+        if (response.EC === 0) {
+          setRestaurants(restaurantItems);
+          setTotalItems(items);
+          setTotalPages(pages);
+        } else {
+          console.error("API error:", response.EM);
+          setRestaurants([]);
+        }
+      } catch (error) {
+        console.error("Error fetching drivers:", error);
+        setRestaurants([]);
+      }
+      setIsLoading(false);
+    };
+
+    fetchDrivers();
+  }, [currentPage]);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      console.log("Changing to page:", page);
+      setCurrentPage(page);
+    }
+  };
 
   const fetchRestaurants = async () => {
     const result = restaurantService.findAllPaginated();
     result
       .then((res) => {
         const responseData = res.data;
-        console.log("check what here", responseData);
+        console.log(
+          "check what here",
+          responseData.items.map((item: ItemRestaurantBackend) => ({
+            id: item.id,
+            name: item.restaurant_name,
+            address: `${item.address.street} ${item.address.city} ${item.address.nationality}`,
+            cuisine: "",
+            isActive: item.status.is_active,
+            rating: undefined,
+            avatar: item?.avatar,
+          }))
+        );
         const buildData = responseData.items.map(
           (item: ItemRestaurantBackend) => ({
             id: item.id,
@@ -310,6 +368,19 @@ const Page = () => {
             avatar: item?.avatar,
           })
         );
+        const {
+          totalItems: items,
+          totalPages: pages,
+          items: restaurantItems,
+        } = res.data;
+        if (res.EC === 0) {
+          setRestaurants(restaurantItems);
+          setTotalItems(items);
+          setTotalPages(pages);
+        } else {
+          console.error("API error:", res.EM);
+          setRestaurants([]);
+        }
         setRestaurants(buildData);
       })
       .catch((err) => {
@@ -375,7 +446,7 @@ const Page = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-2">Total Restaurants</h2>
-          <div className="text-3xl font-bold text-blue-600">{stats.total}</div>
+          <div className="text-3xl font-bold text-blue-600">{totalItems}</div>
         </div>
 
         <div className="bg-white p-4 rounded-lg shadow">
@@ -432,6 +503,42 @@ const Page = () => {
             </TableBody>
           </Table>
         </div>
+        <div className="mt-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  className={
+                    currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                  }
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      onClick={() => handlePageChange(page)}
+                      isActive={currentPage === page}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  className={
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
       </div>
 
       <Dialog
@@ -442,7 +549,7 @@ const Page = () => {
           <DialogHeader>
             <DialogTitle>Restaurant Menu Items</DialogTitle>
             <DialogDescription>
-              View menu items for {selectedRestaurant?.name}
+              View menu items for {selectedRestaurant?.restaurant_name}
             </DialogDescription>
           </DialogHeader>
           <Spinner isVisible={isMenuItemsLoading} isOverlay />

@@ -5,8 +5,8 @@ import { Avatar } from "@/types/common";
 // Define Restaurant interface
 export interface Restaurant {
   id: string;
-  name: string;
-  address: string;
+  restaurant_name: string;
+  address: { city: string; street: string; nationality: string };
   avatar: Avatar;
   cuisine: string;
   rating?: number;
@@ -54,14 +54,14 @@ export const restaurantService = {
     const response = await axiosInstance.get(`${API_ENDPOINTS.RESTAURANTS}`);
     return response.data;
   },
-  findAllPaginated: async (limit?: number, offset?: number) => {
+  findAllPaginated: async (limit?: number, page?: number) => {
     try {
       const response = await axiosInstance.get(
         `${API_ENDPOINTS.RESTAURANTS}/paginated`,
         {
           params: {
             limit,
-            offset,
+            page,
           },
         }
       );

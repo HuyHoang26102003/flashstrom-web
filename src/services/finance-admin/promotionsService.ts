@@ -10,14 +10,14 @@ export const promotionsService = {
     return response.data;
   },
 
-  findAllPaginated: async (limit?: number, offset?: number) => {
+  findAllPaginated: async (limit?: number, page?: number) => {
     try {
       const response = await axiosInstance.get(
         `${API_ENDPOINTS.PROMOTIONS}/paginated`,
         {
           params: {
             limit,
-            offset,
+            page,
           },
         }
       );

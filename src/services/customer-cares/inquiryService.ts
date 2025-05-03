@@ -9,14 +9,14 @@ export const inquiryService = {
     return response.data;
   },
 
-  findAllPaginated: async (limit?: number, offset?: number) => {
+  findAllPaginated: async (limit?: number, page?: number) => {
     try {
       const response = await axiosInstance.get(
         `${API_ENDPOINTS.CUSTOMER_CARE_INQUIRIES}/paginated`,
         {
           params: {
             limit,
-            offset,
+            page,
           },
         }
       );

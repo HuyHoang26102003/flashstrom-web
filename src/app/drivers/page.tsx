@@ -29,7 +29,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import * as dateFns from "date-fns";
 import { Spinner } from "@/components/Spinner";
 import { Eye, Power, Trash } from "lucide-react";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
@@ -47,6 +46,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { formatEpochToExactTime } from "@/utils/functions/formatTime";
 
 export default function DriversPage() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -54,14 +62,28 @@ export default function DriversPage() {
   const [driverOrders, setDriverOrders] = useState<DriverOrder[]>([]);
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     setIsLoading(true);
     const fetchDrivers = async () => {
       try {
-        const response = await driverService.findAllPaginated();
-        if (response.data.EC === 0) {
-          setDrivers(response.data.items);
+        console.log("Fetching page:", currentPage);
+        const response = await driverService.findAllPaginated(10, currentPage);
+        const {
+          totalItems: items,
+          totalPages: pages,
+          items: driverItems,
+        } = response.data;
+        if (response.EC === 0) {
+          setDrivers(driverItems);
+          setTotalItems(items);
+          setTotalPages(pages);
+        } else {
+          console.error("API error:", response.EM);
+          setDrivers([]);
         }
       } catch (error) {
         console.error("Error fetching drivers:", error);
@@ -71,7 +93,7 @@ export default function DriversPage() {
     };
 
     fetchDrivers();
-  }, []);
+  }, [currentPage]);
 
   const handleViewOrders = async (driver: Driver) => {
     setSelectedDriver(driver);
@@ -310,6 +332,13 @@ export default function DriversPage() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      console.log("Changing to page:", page);
+      setCurrentPage(page);
+    }
+  };
+
   return (
     <div className="p-4">
       <Spinner isVisible={isLoading} isOverlay />
@@ -318,22 +347,20 @@ export default function DriversPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-2">Total Drivers</h2>
-          <div className="text-3xl font-bold text-blue-600">
-            {drivers.length}
-          </div>
+          <div className="text-3xl font-bold text-blue-600">{totalItems}</div>
         </div>
 
         <div className="bg-white p-4 rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-2">Active Drivers</h2>
           <div className="text-3xl font-bold text-green-600">
-            {drivers.filter((driver) => driver.available_for_work).length}
+            {drivers?.filter((driver) => driver.available_for_work).length}
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-2">Banned Drivers</h2>
           <div className="text-3xl font-bold text-red-600">
-            {drivers.filter((driver) => driver.is_banned).length}
+            {drivers?.filter((driver) => driver.is_banned).length}
           </div>
         </div>
       </div>
@@ -361,20 +388,67 @@ export default function DriversPage() {
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
+              {table.getRowModel().rows.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No results.
+                  </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
+        </div>
+        <div className="mt-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  className={
+                    currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                  }
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      onClick={() => handlePageChange(page)}
+                      isActive={currentPage === page}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  className={
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       </div>
 
@@ -420,10 +494,7 @@ export default function DriversPage() {
                               {totalItems} items
                             </span>
                             <span className="text-sm text-muted-foreground">
-                              {dateFns.format(
-                                new Date(Number(order.order_time) * 1000),
-                                "PPp"
-                              )}
+                              {formatEpochToExactTime(Number(order.order_time))}
                             </span>
                           </div>
                         </div>
@@ -485,9 +556,8 @@ export default function DriversPage() {
                             <div>
                               <p className="text-sm font-medium">Order Time</p>
                               <p className="text-sm text-muted-foreground">
-                                {dateFns.format(
-                                  new Date(Number(order.order_time) * 1000),
-                                  "PPp"
+                                {formatEpochToExactTime(
+                                  Number(order.order_time)
                                 )}
                               </p>
                             </div>
@@ -496,9 +566,8 @@ export default function DriversPage() {
                                 Delivery Time
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                {dateFns.format(
-                                  new Date(Number(order.delivery_time) * 1000),
-                                  "PPp"
+                                {formatEpochToExactTime(
+                                  Number(order.delivery_time)
                                 )}
                               </p>
                             </div>
