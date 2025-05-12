@@ -37,142 +37,12 @@ interface CustomerCare {
   };
   is_assigned: boolean;
   available_for_work: boolean;
+  is_banned: boolean;
   address: string;
   contact_email: {
     email: string;
   }[];
 }
-
-export const columns: ColumnDef<CustomerCare>[] = [
-  {
-    accessorKey: "contact_email",
-    header: ({ column }) => (
-      <Button
-        className="text-center"
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Email
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const cc = row.original;
-      return (
-        <div className="flex flex-row items-center gap-2">
-          <Image
-            src={cc?.avatar?.url ?? IMAGE_LINKS.DEFAULT_AVATAR}
-            alt="avatar"
-            width={32}
-            height={32}
-            className="h-8 w-8 rounded-full object-cover"
-          />
-          <span>{cc?.contact_email[0]?.email}</span>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "name",
-    header: ({ column }) => (
-      <Button
-        className="text-center"
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Name
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const cc = row.original;
-      return (
-        <div className="text-center">
-          {cc.first_name} {cc.last_name}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "is_assigned",
-    header: ({ column }) => (
-      <Button
-        className="text-center"
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Assignment Status
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => (
-      <div className="text-center">
-        {row.getValue("is_assigned") ? "Assigned" : "Unassigned"}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "active_point",
-    header: ({ column }) => (
-      <Button
-        className="text-center"
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Active Points
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      return <div className="text-center">{row.getValue("active_point")}</div>;
-    },
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    header: "Actions",
-    cell: ({ row }) => {
-      const cc = row.original;
-      return (
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="ghost" className="h-8 w-full p-0">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-32">
-            <div className="grid gap-4">
-              <Button
-                variant="ghost"
-                className="flex items-center justify-start"
-                onClick={() => {
-                  // Handle view details
-                }}
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                Details
-              </Button>
-              <Button
-                variant="ghost"
-                className="flex items-center justify-start"
-              >
-                <Power className="mr-2 h-4 w-4" />
-                {"Deactivate"}
-              </Button>
-              <Button
-                variant="ghost"
-                className="flex items-center justify-start text-destructive"
-              >
-                <Trash className="mr-2 h-4 w-4" />
-                Delete
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
-      );
-    },
-  },
-];
 
 const Page = () => {
   const [customerCare, setCustomerCare] = useState<CustomerCare[]>([]);
@@ -183,9 +53,194 @@ const Page = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    fetchCustomerCare();
-  }, []);
+  const handleStatusChange = async (id: string, shouldBan: boolean) => {
+    try {
+      const response = await customerCareService.toggleCustomerCareStatus(
+        id,
+        shouldBan
+      );
+      if (response.EC === 0) {
+        setCustomerCare((prevCC) =>
+          prevCC.map((cc) =>
+            cc.id === id
+              ? { ...cc, is_banned: shouldBan, available_for_work: !shouldBan }
+              : cc
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error toggling customer care status:", error);
+    }
+  };
+
+  const columns: ColumnDef<CustomerCare>[] = [
+    {
+      accessorKey: "contact_email",
+      header: ({ column }) => (
+        <Button
+          className="text-center"
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Email
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const cc = row.original;
+        return (
+          <div className="flex flex-row items-center gap-2">
+            <Image
+              src={cc?.avatar?.url ?? IMAGE_LINKS.DEFAULT_AVATAR}
+              alt="avatar"
+              width={32}
+              height={32}
+              className="h-8 w-8 rounded-full object-cover"
+            />
+            <span>{cc?.contact_email[0]?.email}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "name",
+      header: ({ column }) => (
+        <Button
+          className="text-center"
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Name
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const cc = row.original;
+        return (
+          <div className="text-center">
+            {cc.first_name} {cc.last_name}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "status",
+      header: ({ column }) => (
+        <Button
+          className="text-center"
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Status
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const cc = row.original;
+        return (
+          <div className="text-center">
+            <span
+              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                cc.is_banned
+                  ? "bg-red-100 text-red-800"
+                  : cc.available_for_work
+                  ? "bg-green-100 text-green-800"
+                  : "bg-yellow-100 text-yellow-800"
+              }`}
+            >
+              {cc.is_banned
+                ? "Banned"
+                : cc.available_for_work
+                ? "Active"
+                : "Inactive"}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "is_assigned",
+      header: ({ column }) => (
+        <Button
+          className="text-center"
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Assignment Status
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <div className="text-center">
+          {row.getValue("is_assigned") ? "Assigned" : "Unassigned"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "active_point",
+      header: ({ column }) => (
+        <Button
+          className="text-center"
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Active Points
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-center">{row.getValue("active_point")}</div>
+        );
+      },
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      header: "Actions",
+      cell: ({ row }) => {
+        const cc = row.original;
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" className="h-8 w-full p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-32">
+              <div className="grid gap-4">
+                <Button
+                  variant="ghost"
+                  className="flex items-center justify-start"
+                  onClick={() => {
+                    // Handle view details
+                  }}
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  Details
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="flex items-center justify-start"
+                  onClick={() => handleStatusChange(cc.id, !cc.is_banned)}
+                >
+                  <Power className="mr-2 h-4 w-4" />
+                  {cc.is_banned ? "Unban" : "Ban"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="flex items-center justify-start text-destructive"
+                >
+                  <Trash className="mr-2 h-4 w-4" />
+                  Delete
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+        );
+      },
+    },
+  ];
 
   const fetchCustomerCare = async () => {
     setIsLoading(true);
@@ -193,30 +248,45 @@ const Page = () => {
       const result = await customerCareService.findAllPaginated();
       console.log("Result from API:", result);
 
-      // Handle both array and object with data property
-      const careData = Array.isArray(result)
-        ? result
-        : result && result.data
-        ? result.data
-        : [];
+      if (result?.EC === 0 && result?.data?.items) {
+        const items = result.data.items.map((item: any) => ({
+          id: item.id,
+          first_name: item.first_name || "",
+          last_name: item.last_name || "",
+          active_point: item.active_point || 0,
+          avatar: item.avatar || null,
+          is_assigned: item.is_assigned || false,
+          available_for_work: item.available_for_work || false,
+          is_banned: item.is_banned || false,
+          address: item.address || "",
+          contact_email: item.contact_email || [],
+        }));
 
-      console.log("Processed data:", careData);
-      setCustomerCare(careData.items);
+        setCustomerCare(items);
 
-      // Calculate statistics
-      const totalCount = careData.length;
-      const activeCount = careData.filter(
-        (cc: { available_for_work: boolean }) => cc.available_for_work
-      ).length;
-      const bannedCount = careData.filter(
-        (cc: { is_banned: boolean }) => cc.is_banned
-      ).length;
+        // Calculate statistics
+        const totalCount = items.length;
+        const activeCount = items.filter(
+          (cc: CustomerCare) => cc.available_for_work && !cc.is_banned
+        ).length;
+        const bannedCount = items.filter(
+          (cc: CustomerCare) => cc.is_banned
+        ).length;
 
-      setStats({
-        total: totalCount,
-        active: activeCount,
-        banned: bannedCount,
-      });
+        setStats({
+          total: totalCount,
+          active: activeCount,
+          banned: bannedCount,
+        });
+      } else {
+        console.error("Invalid response format:", result);
+        setCustomerCare([]);
+        setStats({
+          total: 0,
+          active: 0,
+          banned: 0,
+        });
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
       setCustomerCare([]);
@@ -230,24 +300,27 @@ const Page = () => {
     }
   };
 
-  const handleGenerateCustomerCare = async () => {
-    setIsLoading(true);
-    try {
-      const result =
-        await customerCareService.createCustomerCareRepresentative();
-      console.log("Generate result:", result);
+  useEffect(() => {
+    fetchCustomerCare();
+  }, []);
 
-      if (result && result.EC === 0) {
-        await fetchCustomerCare();
-      } else {
-        console.error("Failed to generate customer care rep:", result);
-      }
-    } catch (error) {
-      console.error("Error generating customer care rep:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // const handleGenerateCustomerCare = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     const result = await customerCareService.createCustomerCareRepresentative();
+  //     console.log("Generate result:", result);
+
+  //     if (result && result.EC === 0) {
+  //       await fetchCustomerCare();
+  //     } else {
+  //       console.error("Failed to generate customer care rep:", result);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error generating customer care rep:", error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const table = useReactTable({
     data: customerCare,
@@ -284,9 +357,9 @@ const Page = () => {
           <h2 className="text-xl font-semibold mb-4">
             Customer Care Representatives
           </h2>
-          <Button onClick={handleGenerateCustomerCare}>
+          {/* <Button onClick={handleGenerateCustomerCare}>
             Generate Customer Care Representative
-          </Button>
+          </Button> */}
         </div>
         <div className="rounded-md border">
           <Table>
@@ -307,18 +380,29 @@ const Page = () => {
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
+              {table.getRowModel().rows.length > 0 ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No customer care representatives found.
+                  </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </div>

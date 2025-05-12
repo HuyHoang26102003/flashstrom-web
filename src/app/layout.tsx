@@ -15,8 +15,9 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "Flashstrom",
-  description: "flashtrom",
+  description: "App manage FlashFood for admins",
 };
+import { Toaster } from "@/components/ui/toaster";
 
 import MainNav from "@/components/Nav/MainNav";
 import SideBar from "@/components/Nav/SideBar";
@@ -37,6 +38,7 @@ export default function RootLayout({
             <div className="fc p-6 col-span-10 overflow-auto">
               <MainNav />
               {children}
+              <Toaster />
             </div>
           </div>
         </div>

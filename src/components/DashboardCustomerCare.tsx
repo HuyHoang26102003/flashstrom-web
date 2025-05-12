@@ -15,7 +15,6 @@ import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
 import { useCustomerCareStore } from "@/stores/customerCareStore";
-// import { inquiryService } from "@/services/customer-cares/inquiryService";
 import { Spinner } from "./Spinner";
 import { ApiResponse } from "@/types/common";
 import {
@@ -268,7 +267,7 @@ const ListInquiries = ({
                     {formatEpochToRelativeTime(ticket.created_at)}{" "}
                     {formatEpochToRelativeTime(ticket.created_at) === "Just now"
                       ? null
-                      : "ago"}
+                      : ""}
                   </span>
                 </div>
               </CardHeader>

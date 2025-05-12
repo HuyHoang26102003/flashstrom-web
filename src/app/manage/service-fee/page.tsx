@@ -106,7 +106,13 @@ const page = () => {
     try {
       const response = await axiosInstance.patch(
         `/finance-rules/${selectedRule.id}`,
-        selectedRule
+        {
+          ...selectedRule,
+          id: undefined,
+          created_at: undefined,
+          created_by: undefined,
+          customer_care_hourly_wage: +selectedRule.customer_care_hourly_wage
+        }
       );
       const { EC, EM, data } = response.data;
       if (EC === 0) {

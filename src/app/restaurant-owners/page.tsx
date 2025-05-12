@@ -57,12 +57,26 @@ import {
 interface ItemRestaurantBackend {
   id: string;
   restaurant_name: string;
-  status: { is_active?: boolean };
+  status: {
+    is_active?: boolean;
+    is_banned?: boolean;
+  };
   address: {
     nationality: string;
     city: string;
     street: string;
   };
+  avatar?: Avatar;
+}
+
+interface Restaurant {
+  id: string;
+  restaurant_name: string;
+  address: string;
+  cuisine: string;
+  isActive: boolean;
+  is_banned: boolean;
+  rating: number | undefined;
   avatar?: Avatar;
 }
 
@@ -118,14 +132,20 @@ const Page = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
-  const handleStatusChange = async (id: string, isActive: boolean) => {
+  const handleStatusChange = async (id: string, shouldBan: boolean) => {
     try {
       const response = await restaurantService.toggleRestaurantStatus(
         id,
-        isActive
+        shouldBan
       );
       if (response.EC === 0) {
-        fetchRestaurants();
+        setRestaurants((prevRestaurants) =>
+          prevRestaurants.map((restaurant) =>
+            restaurant.id === id
+              ? { ...restaurant, is_banned: shouldBan, isActive: !shouldBan }
+              : restaurant
+          )
+        );
       }
     } catch (error) {
       console.error("Error toggling restaurant status:", error);
@@ -228,25 +248,31 @@ const Page = () => {
       },
     },
     {
-      accessorKey: "isActive",
+      id: "status",
       header: () => (
         <Button className="text-center" variant="ghost">
           Status
         </Button>
       ),
       cell: ({ row }) => {
-        const isActive = row.getValue("isActive") as boolean;
+        const restaurant = row.original;
         return (
           <div className="text-center">
             <span
               className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
               ${
-                isActive
+                restaurant.is_banned
+                  ? "bg-red-100 text-red-800"
+                  : restaurant.isActive
                   ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
+                  : "bg-yellow-100 text-yellow-800"
               }`}
             >
-              {isActive ? "Active" : "Inactive"}
+              {restaurant.is_banned
+                ? "Banned"
+                : restaurant.isActive
+                ? "Active"
+                : "Inactive"}
             </span>
           </div>
         );
@@ -279,11 +305,11 @@ const Page = () => {
                   variant="ghost"
                   className="flex items-center justify-start"
                   onClick={() =>
-                    handleStatusChange(restaurant.id, !restaurant.isActive)
+                    handleStatusChange(restaurant.id, !restaurant.is_banned)
                   }
                 >
                   <Power className="mr-2 h-4 w-4" />
-                  {restaurant.isActive ? "Deactivate" : "Activate"}
+                  {restaurant.is_banned ? "Unban" : "Ban"}
                 </Button>
                 <Button
                   variant="ghost"
@@ -353,6 +379,7 @@ const Page = () => {
             address: `${item.address.street} ${item.address.city} ${item.address.nationality}`,
             cuisine: "",
             isActive: item.status.is_active,
+            is_banned: item.status.is_banned,
             rating: undefined,
             avatar: item?.avatar,
           }))
@@ -363,7 +390,8 @@ const Page = () => {
             name: item.restaurant_name,
             address: `${item.address.street} ${item.address.city} ${item.address.nationality}`,
             cuisine: "",
-            isActive: item.status.is_active,
+            isActive: item.status.is_active ?? false,
+            is_banned: item.status.is_banned ?? false,
             rating: undefined,
             avatar: item?.avatar,
           })
@@ -394,7 +422,9 @@ const Page = () => {
 
   useEffect(() => {
     const totalCount = restaurants.length;
-    const activeCount = restaurants.filter((r) => r.isActive).length;
+    const activeCount = restaurants.filter(
+      (r) => r.isActive && !r.is_banned
+    ).length;
     const bannedCount = restaurants.filter((r) => r.is_banned).length;
 
     setStats({
@@ -404,14 +434,14 @@ const Page = () => {
     });
   }, [restaurants]);
 
-  const handleGenerateRestaurant = async () => {
-    setIsLoading(true);
-    const result = await restaurantService.createRestaurant();
-    setIsLoading(false);
-    if (result.EC === 0) {
-      fetchRestaurants();
-    }
-  };
+  // const handleGenerateRestaurant = async () => {
+  //   setIsLoading(true);
+  //   const result = await restaurantService.createRestaurant();
+  //   setIsLoading(false);
+  //   if (result.EC === 0) {
+  //     fetchRestaurants();
+  //   }
+  // };
 
   const fetchMenuItems = async (restaurantId: string) => {
     setIsMenuItemsLoading(true);
@@ -465,9 +495,9 @@ const Page = () => {
       <div className="mt-8">
         <div className="justify-between flex items-center">
           <h2 className="text-xl font-semibold mb-4">Restaurant List</h2>
-          <Button onClick={handleGenerateRestaurant}>
+          {/* <Button onClick={handleGenerateRestaurant}>
             Generate Restaurant
-          </Button>
+          </Button> */}
         </div>
         <div className="rounded-md border">
           <Table>

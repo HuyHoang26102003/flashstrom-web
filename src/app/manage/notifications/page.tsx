@@ -572,7 +572,7 @@ const page = () => {
                       className="w-12 h-12 rounded-md"
                     />
                   )}
-                  <span>
+                  <span className="rounded-md bg-primary px-2 border hover:bg-emerald-400 border-gray-100 cursor-pointer hover:duration-200 shadow-sm">
                     {selectedNotification.image?.url
                       ? "Change Image"
                       : "Upload Image"}

@@ -4,7 +4,7 @@ import { API_ENDPOINTS } from "@/lib/constants/api";
 export const inquiryService = {
   getAllInquiries: async (id: string) => {
     const response = await axiosInstance.get(
-      `customer-care${API_ENDPOINTS.INQUIRIES}/${id}`
+      `customer-cares${API_ENDPOINTS.INQUIRIES}/${id}`
     );
     return response.data;
   },

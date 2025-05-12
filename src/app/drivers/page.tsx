@@ -344,7 +344,7 @@ export default function DriversPage() {
       <Spinner isVisible={isLoading} isOverlay />
       <h1 className="text-2xl font-bold mb-4">Driver Dashboard</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-2">Total Drivers</h2>
           <div className="text-3xl font-bold text-blue-600">{totalItems}</div>
@@ -354,6 +354,13 @@ export default function DriversPage() {
           <h2 className="text-lg font-semibold mb-2">Active Drivers</h2>
           <div className="text-3xl font-bold text-green-600">
             {drivers?.filter((driver) => driver.available_for_work).length}
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h2 className="text-lg font-semibold mb-2">Inactive Drivers</h2>
+          <div className="text-3xl font-bold text-yellow-600">
+            {drivers?.filter((driver) => !driver.available_for_work && !driver.is_banned).length}
           </div>
         </div>
 

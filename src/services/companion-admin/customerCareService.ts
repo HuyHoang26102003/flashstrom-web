@@ -39,7 +39,7 @@ export const customerCareService = {
   findAllPaginated: async (limit?: number, page?: number) => {
     try {
       const response = await axiosInstance.get(
-        `${API_ENDPOINTS.CUSTOMER_CARE_REPRESENTATIVES}/paginated`,
+        `${API_ENDPOINTS.CUSTOMER_CARE_REPRESENTATIVES_PAGINATED}`,
         {
           params: {
             limit,

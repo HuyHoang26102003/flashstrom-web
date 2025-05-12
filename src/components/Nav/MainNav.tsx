@@ -1,9 +1,6 @@
 "use client";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { GoBell, GoGift } from "react-icons/go";
-import { FiSettings } from "react-icons/fi";
-import { HiOutlineChatAlt } from "react-icons/hi";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -20,11 +17,11 @@ import { useState } from "react";
 import { IMAGE_LINKS } from "@/assets/imageLinks";
 import { useAdminStore } from "@/stores/adminStore";
 import { useCustomerCareStore } from "@/stores/customerCareStore";
+import { Bell, Bolt, MessageCircle, Ticket } from "lucide-react";
 
 const MainNav = () => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-
   const logout = useAdminStore((state) => state.logout);
 
   const adminZ = useAdminStore((state) => state.user);
@@ -40,8 +37,8 @@ const MainNav = () => {
     <div className="jb w-full gap-4 mb-6">
       <Link href={"/"}>
         <Avatar>
-          <AvatarImage src="https://res.cloudinary.com/dpubnzap3/image/upload/w_1000,c_fill,ar_1:1,g_auto,r_max,bo_5px_solid_red,b_rgb:262c35/v1738821741/ic45aqy23c7ynle7yemv.png" />
-          <AvatarFallback>CN</AvatarFallback>
+          <AvatarImage src="https://res.cloudinary.com/dlavqnrlx/image/upload/v1746519176/xoxqia9t1ywka71pskrb.png" />
+          <AvatarFallback></AvatarFallback>
         </Avatar>
       </Link>
       <Input
@@ -51,44 +48,42 @@ const MainNav = () => {
       />
       <div className=" jb gap-8 ">
         <div className="jb gap-4 max-md:hidden">
-          <div className="w-10 aspect-square rounded-xl relative cc bg-info-100 shadow-md shadow-info-300 hover-sd">
-            <GoBell className="text-info-500" />
+          <div
+            onClick={() => router.push("/manage/notifications")}
+            className="w-10 aspect-square rounded-xl relative cc bg-info-100 shadow-md shadow-info-300 hover-sd"
+          >
+            <Bell className="text-info-500" />
             <Badge
               className="absolute -top-1 -right-1 border-2 border-white text-[0.5rem] px-[0.14rem] py-[0.1rem] bg-info-500"
               variant="default"
-            >
-              12
-            </Badge>
+            ></Badge>
           </div>
           <div className="w-10 aspect-square rounded-xl relative cc bg-primary-100 shadow-md shadow-primary-300 hover-sd">
-            <HiOutlineChatAlt className="text-primary-500" />
+            <MessageCircle className="text-primary-500" />
             <Badge
               className="absolute -top-1 -right-1 border-2 border-white text-[0.5rem] px-[0.14rem] py-[0.1rem] bg-primary-500"
               variant="default"
-            >
-              12
-            </Badge>
+            ></Badge>
           </div>
           <div
             onClick={() => router.push("/promotions")}
-            className="w-10 aspect-square rounded-xl relative cc bg-success-100 shadow-md shadow-success-300 hover-sd cursor-pointer"
+            className="w-10 aspect-square rounded-xl relative cc bg-amber-200 shadow-md shadow-orange-300 hover-sd cursor-pointer"
           >
-            <GoGift className="text-success-700" />
+            <Ticket className="text-yellow-500" />
             <Badge
-              className="absolute -top-1 -right-1 border-2 border-white text-[0.5rem] px-[0.14rem] py-[0.1rem] bg-success-700"
+              className="absolute -top-1 -right-1 border-2 border-white text-[0.5rem] px-[0.14rem] py-[0.1rem] bg-amber-200"
               variant="default"
-            >
-              12
-            </Badge>
+            ></Badge>
           </div>
-          <div className="w-10 aspect-square rounded-xl relative cc bg-danger-100 shadow-md shadow-danger-300 hover-sd">
-            <FiSettings className="text-danger-500" />
+          <div
+            onClick={() => router.push("/settings")}
+            className="w-10 aspect-square rounded-xl relative cc bg-danger-100 shadow-md shadow-danger-300 hover-sd"
+          >
+            <Bolt className="text-danger-500" />
             <Badge
               className="absolute -top-1 -right-1 border-2 border-white text-[0.5rem] px-[0.14rem] py-[0.1rem] bg-danger-500"
               variant="default"
-            >
-              12
-            </Badge>
+            ></Badge>
           </div>
         </div>
         <Separator
@@ -103,7 +98,7 @@ const MainNav = () => {
             <PopoverTrigger asChild>
               <Avatar>
                 <AvatarImage src={userAvatar} />
-                <AvatarFallback>CN</AvatarFallback>
+                <AvatarFallback>Admin</AvatarFallback>
               </Avatar>
             </PopoverTrigger>
             <PopoverContent className="">
@@ -112,9 +107,9 @@ const MainNav = () => {
                   <Button
                     onClick={() => logout()}
                     variant={"ghost"}
-                    className="text-red-300"
+                    className="text-red-500 hover:bg-red-100 w-full justify-start bg-grey"
                   >
-                    Logout
+                    Log Out
                   </Button>
                 </DialogTrigger>
                 <AuthDialogContent onClose={() => setOpen(false)} />

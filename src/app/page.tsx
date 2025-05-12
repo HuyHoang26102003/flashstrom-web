@@ -10,7 +10,7 @@ export default function Home() {
   const customerCareLoggedInAs = useCustomerCareStore(
     (state) => state.user?.logged_in_as
   );
-  const loggedInAs = adminLoggedInAs || customerCareLoggedInAs; // Lấy từ store nào có giá trị
+  const loggedInAs = adminLoggedInAs || customerCareLoggedInAs; 
   const RenderHomeComponent = () => {
     switch (loggedInAs) {
       case "SUPER_ADMIN":

@@ -37,6 +37,14 @@ import { Order } from "@/types/orders";
 import { orderService } from "@/services/order/orderService";
 import { formatEpochToExactTime } from "@/utils/functions/formatTime";
 import IdCell from "@/components/IdCell";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationLink,
+} from "@/components/ui/pagination";
 
 const Page = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -50,15 +58,31 @@ const Page = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDialogLoading, setIsDialogLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
-      const response = await orderService.findAllPaginated();
+      const response = await orderService.findAllPaginated(10, currentPage);
       const { EC, data } = response;
-      // console.log("check whawte here", data);
       if (EC === 0) {
         setOrders(data.items);
+        setTotalItems(data.totalItems);
+        setTotalPages(data.totalPages);
+
+        // Calculate stats based on order status
+        const deliveredCount = data.items.filter(order => order.status === "DELIVERED").length;
+        const pendingCount = data.items.filter(order => order.status === "PENDING").length;
+        const cancelledCount = data.items.filter(order => order.cancelled_at !== null).length;
+
+        setStats({
+          total: data.totalItems,
+          delivered: deliveredCount,
+          pending: pendingCount,
+          cancelled: cancelledCount,
+        });
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -83,23 +107,7 @@ const Page = () => {
 
   useEffect(() => {
     fetchOrders();
-  }, []);
-
-  useEffect(() => {
-    const totalCount = orders.length;
-    const deliveredCount = orders.filter(
-      (o) => o.status === "DELIVERED"
-    ).length;
-    const pendingCount = orders.filter((o) => o.status === "PENDING").length;
-    const cancelledCount = orders.filter((o) => o.cancelled_at !== null).length;
-
-    setStats({
-      total: totalCount,
-      delivered: deliveredCount,
-      pending: pendingCount,
-      cancelled: cancelledCount,
-    });
-  }, [orders]);
+  }, [currentPage]);
 
   const handleCancelOrder = async (orderId: string) => {
     setIsLoading(true);
@@ -111,6 +119,12 @@ const Page = () => {
       console.error("Error cancelling order:", error);
     }
     setIsLoading(false);
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
   };
 
   const columns: ColumnDef<Order>[] = [
@@ -279,7 +293,7 @@ const Page = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg shadow">
           <h2 className="text-md font-semibold mb-2">Total Orders</h2>
-          <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
+          <div className="text-2xl font-bold text-blue-600">{totalItems}</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow">
           <h2 className="text-md font-semibold mb-2">Delivered Orders</h2>
@@ -350,6 +364,42 @@ const Page = () => {
               )}
             </TableBody>
           </Table>
+        </div>
+        <div className="mt-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  className={
+                    currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                  }
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      onClick={() => handlePageChange(page)}
+                      isActive={currentPage === page}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  className={
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       </div>
 

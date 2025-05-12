@@ -10,16 +10,16 @@ export const AD_ADMIN_SIDEBAR_ITEMS: sideBarItem[] = [
     link: "/",
   },
   {
+    title: "Customers Statistics",
+    link: "/customers",
+  },
+  {
     title: "Drivers Statistics",
     link: "/drivers",
   },
   {
     title: "Restaurant Owner Statistics",
     link: "/restaurant-owners",
-  },
-  {
-    title: "Customers Statistics",
-    link: "/customers",
   },
   {
     title: "Orders Statistics",
@@ -46,11 +46,11 @@ export const AD_ADMIN_SIDEBAR_ITEMS: sideBarItem[] = [
         link: "/manage/service-fee",
       },
       {
-        title: "Mange Notifications",
+        title: "Manage Notifications",
         link: "/manage/notifications",
       },
       {
-        title: "Mange FAQs",
+        title: "Manage FAQs",
         link: "/manage/faqs",
       },
     ],
@@ -63,7 +63,7 @@ export const AD_SIDEBAR_ITEMS_CUSTOMER_CARE: sideBarItem[] = [
     link: "/",
   },
   {
-    title: "Chats",
+    title: "F-Chats",
     link: "/chats",
   },
   {
