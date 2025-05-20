@@ -212,14 +212,14 @@ const Page = () => {
     });
   }, [customers]);
 
-  const handleGenerateCustomer = async () => {
-    setIsLoading(true);
-    const result = await customerService.createCustomer();
-    setIsLoading(false);
-    if (result && result.EC === 0) {
-      fetchCustomers();
-    }
-  };
+  // const handleGenerateCustomer = async () => {
+  //   setIsLoading(true);
+  //   const result = await customerService.createCustomer();
+  //   setIsLoading(false);
+  //   if (result && result.EC === 0) {
+  //     fetchCustomers();
+  //   }
+  // };
 
   const handleStatusChange = async (customerId: string, newStatus: boolean) => {
     setIsLoading(true);
@@ -490,7 +490,7 @@ const Page = () => {
       <div className="mt-8">
         <div className="justify-between flex items-center">
           <h2 className="text-xl font-semibold mb-4">Customer List</h2>
-          <Button onClick={handleGenerateCustomer}>Generate Customer</Button>
+          {/* <Button onClick={handleGenerateCustomer}>Generate Customer</Button> */}
         </div>
         <div className="rounded-md border">
           <Table>

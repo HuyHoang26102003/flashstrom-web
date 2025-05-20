@@ -211,7 +211,7 @@ const ConditionalTabContentRender = ({
 const page = () => {
   const [selectedTab, setSelectedTab] = useState<Enum_Tabs>(tabs[0]);
   return (
-    <div className="w-full flex gap-4 justify-between">
+    <div className="w-full  flex gap-4 justify-between">
       <div className=" w-4/12 flex flex-col ">
         {tabs?.map((item) => (
           <Button
@@ -227,7 +227,7 @@ const page = () => {
         ))}
       </div>
       <div className="w-8/12  h-screen">
-        {<ConditionalTabContentRender selectedTab={selectedTab} />}
+        <ConditionalTabContentRender selectedTab={selectedTab} />
       </div>
     </div>
   );

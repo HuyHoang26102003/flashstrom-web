@@ -1,6 +1,7 @@
 "use client";
 import AdminDashboard from "@/components/AdminDashboard";
 import DashboardCustomerCare from "@/components/DashboardCustomerCare";
+import AboutUsPage from "@/components/AboutUsPage";
 import { useAdminStore } from "@/stores/adminStore";
 import { useCustomerCareStore } from "@/stores/customerCareStore";
 import { Spinner } from "@/components/Spinner";
@@ -10,7 +11,7 @@ export default function Home() {
   const customerCareLoggedInAs = useCustomerCareStore(
     (state) => state.user?.logged_in_as
   );
-  const loggedInAs = adminLoggedInAs || customerCareLoggedInAs; 
+  const loggedInAs = adminLoggedInAs || customerCareLoggedInAs;
   const RenderHomeComponent = () => {
     switch (loggedInAs) {
       case "SUPER_ADMIN":
@@ -22,7 +23,7 @@ export default function Home() {
       case "CUSTOMER_CARE_REPRESENTATIVE":
         return <DashboardCustomerCare />;
       default:
-        return <Spinner isVisible={true} isOverlay />;
+        return <AboutUsPage />;
     }
   };
 
