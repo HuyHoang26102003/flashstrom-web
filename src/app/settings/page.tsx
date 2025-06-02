@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -15,17 +15,20 @@ import { customerService } from "@/services/companion-admin/customerService";
 import { restaurantService } from "@/services/companion-admin/restaurantService";
 import { ToastAction } from "@/components/ui/toast";
 import { useToast } from "@/hooks/use-toast";
+import { useCustomerCareStore } from "@/stores/customerCareStore";
 
 enum Enum_Tabs {
   SEEDING = "Seeding",
   PROFILE = "Profile",
   SECURITY = "Security",
+  LOGOUT = "Logout",
 }
 
 const tabs: Enum_Tabs[] = [
   Enum_Tabs.SEEDING,
   Enum_Tabs.PROFILE,
   Enum_Tabs.SECURITY,
+  Enum_Tabs.LOGOUT,
 ];
 
 type TypeSeedingAccordionItem = {
@@ -209,22 +212,41 @@ const ConditionalTabContentRender = ({
 };
 
 const page = () => {
+  const customerCareZ = useCustomerCareStore((state) => state.user);
   const [selectedTab, setSelectedTab] = useState<Enum_Tabs>(tabs[0]);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (customerCareZ?.logged_in_as === "CUSTOMER_CARE_REPRESENTATIVE") {
+      setSelectedTab(Enum_Tabs.LOGOUT);
+    }
+  }, [customerCareZ]);
+
+  const logout = useCustomerCareStore((state) => state.logout);
+
   return (
     <div className="w-full  flex gap-4 justify-between">
       <div className=" w-4/12 flex flex-col ">
-        {tabs?.map((item) => (
-          <Button
-            onClick={() => setSelectedTab(item)}
-            key={item}
-            className={`text-primary ${
-              selectedTab === item ? "bg-primary-500 text-white" : null
-            }`}
-            variant="outline"
-          >
-            {item}
-          </Button>
-        ))}
+        {tabs
+          ?.filter((item) => item === Enum_Tabs.LOGOUT)
+          ?.map((item) => (
+            <Button
+              onClick={() => {
+                if (item === Enum_Tabs.LOGOUT) {
+                  logout();
+                  router.push("/");
+                }
+                setSelectedTab(item);
+              }}
+              key={item}
+              className={`text-primary ${
+                selectedTab === item ? "bg-primary-500 text-white" : null
+              }`}
+              variant="outline"
+            >
+              {item}
+            </Button>
+          ))}
       </div>
       <div className="w-8/12  h-screen">
         <ConditionalTabContentRender selectedTab={selectedTab} />

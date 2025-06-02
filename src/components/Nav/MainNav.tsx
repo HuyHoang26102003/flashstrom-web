@@ -33,13 +33,11 @@ const MainNav = () => {
   const userFullName = adminZ
     ? `${adminZ.last_name} ${adminZ.first_name}`
     : `${customerCareZ?.last_name} ${customerCareZ?.first_name}`;
-
   if (!adminZ?.role || !customerCareZ) {
     return null;
   }
-
   return (
-    <div className="jb w-full gap-4 mb-6">
+    <div className="flex items-center justify-between w-full p-4 gap-4 bg-white/80 backdrop-blur-sm rounded-lg">
       <Link href={"/"}>
         <Avatar>
           <AvatarImage src="https://res.cloudinary.com/dlavqnrlx/image/upload/v1746519176/xoxqia9t1ywka71pskrb.png" />
@@ -52,7 +50,7 @@ const MainNav = () => {
         className="bg-white flex-1"
       />
       <div className=" jb gap-8 ">
-        <div className="jb gap-4 max-md:hidden">
+        <div className="jb gap-2 max-md:hidden">
           <div
             onClick={() => router.push("/manage/notifications")}
             className="w-10 aspect-square rounded-xl relative cc bg-info-100 shadow-md shadow-info-300 hover-sd"

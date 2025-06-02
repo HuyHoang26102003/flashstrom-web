@@ -35,7 +35,7 @@ export default function RootLayout({
         <div className="background max-w-screen-lg h-[calc(100vh-1rem)] rounded-lg shadow-md overflow-hidden mx-auto">
           <div className="grid grid-cols-12 h-full">
             <SideBar />
-            <div className="fc p-6 col-span-10 overflow-auto">
+            <div className="col-span-10 bg-white/50 backdrop-blur-sm p-6 overflow-auto">
               <MainNav />
               {children}
               <Toaster />

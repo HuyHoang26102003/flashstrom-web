@@ -70,4 +70,8 @@ export const AD_SIDEBAR_ITEMS_CUSTOMER_CARE: sideBarItem[] = [
     title: "Orders",
     link: "/orders",
   },
+  {
+    title: "Settings",
+    link: "/settings",
+  },
 ];

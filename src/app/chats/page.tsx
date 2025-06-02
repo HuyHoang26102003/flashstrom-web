@@ -178,45 +178,6 @@ export default function ChatPage() {
       console.error("Socket server error:", error);
     });
 
-    chatSocket.onNewMessage(newSocket, (message: ChatMessage) => {
-      console.log("New message received:", message);
-      console.log("Current pendingMessages:", pendingMessages);
-      console.log("Current chatHistory:", chatHistory);
-
-      if (message.roomId === selectedRoomId) {
-        const normalizedContent = message.content.normalize("NFC");
-        setPendingMessages((prev) => {
-          const updatedPending = prev.filter(
-            (pending) =>
-              !(
-                pending.content.normalize("NFC") === normalizedContent &&
-                pending.roomId === message.roomId
-              )
-          );
-          console.log("Updated pendingMessages:", updatedPending);
-          return updatedPending;
-        });
-
-        setChatHistory((prev) => {
-          const updatedHistory = prev.filter(
-            (msg) =>
-              !(
-                msg.content.normalize("NFC") === normalizedContent &&
-                msg.roomId === message.roomId &&
-                msg.senderType === "CUSTOMER_CARE_REPRESENTATIVE" &&
-                msg.id.startsWith("temp-")
-              )
-          );
-          console.log("Updated chatHistory:", updatedHistory);
-          return [...updatedHistory, message];
-        });
-
-        setTimeout(() => {
-          fetchAllChats(newSocket);
-        }, 200);
-      }
-    });
-
     if (newSocket.connected) {
       console.log("Socket already connected, fetching chats...");
       fetchAllChats(newSocket);
@@ -227,11 +188,61 @@ export default function ChatPage() {
       newSocket.off("connect", handleConnect);
       newSocket.off("disconnect", handleDisconnect);
       newSocket.off("error");
-      newSocket.off("newMessage");
       newSocket.disconnect();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    console.log("Setting up message listener with socket:", socket.id);
+
+    const handleNewMessage = (message: ChatMessage) => {
+      console.log("New message received in handler:", message);
+
+      // Always fetch all chats to update the chat list
+      fetchAllChats(socket);
+
+      // Only update chat history if it's the current room
+      if (message.roomId === selectedRoomId) {
+        console.log("Updating chat history for current room:", selectedRoomId);
+        const normalizedContent = message.content.normalize("NFC");
+
+        // Update pending messages
+        setPendingMessages((prev) => {
+          const updatedPending = prev.filter(
+            (pending) =>
+              !(
+                pending.content.normalize("NFC") === normalizedContent &&
+                pending.roomId === message.roomId
+              )
+          );
+          return updatedPending;
+        });
+
+        // Update chat history
+        setChatHistory((prev) => {
+          const updatedHistory = prev.filter(
+            (msg) =>
+              !(
+                msg.content.normalize("NFC") === normalizedContent &&
+                msg.roomId === message.roomId &&
+                msg.senderType === "CUSTOMER_CARE_REPRESENTATIVE" &&
+                msg.id.startsWith("temp-")
+              )
+          );
+          return [...updatedHistory, message];
+        });
+      }
+    };
+
+    chatSocket.onNewMessage(socket, handleNewMessage);
+
+    return () => {
+      console.log("Cleaning up message listener");
+      socket.off("newMessage");
+    };
+  }, [socket, selectedRoomId]);
 
   useEffect(() => {
     if (selectedRoomId && socket) {
@@ -402,8 +413,8 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex overflow-hidden">
-      <div className="w-1/3 border-r border-gray-200 px-4 overflow-y-auto">
+    <div className="flex overflow-hidden  py-4">
+      <div className="w-1/3  border-r border-gray-200 pr-4 overflow-y-auto">
         <Input placeholder="Search" className="mb-4 bg-white" />
         <div className="flex-col mb-4 bg-white rounded-lg shadow-md p-4">
           <h2 className="text-lg font-semibold mb-2 bg-white">Ongoing chats</h2>
@@ -494,7 +505,7 @@ export default function ChatPage() {
       </div>
 
       <div className="flex-1 flex flex-col bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="border-b border-gray-200 p-4 flex items-center justify-between">
+        <div className="border-b border-gray-200 p-4 py-2 bg-violet-300 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Avatar>
               <AvatarImage
@@ -524,7 +535,7 @@ export default function ChatPage() {
           </div>
         </div>
 
-        <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
+        <div className="max-h-[calc(100vh-14rem)] p-4 overflow-y-auto bg-red-500">
           {chatHistory.map((msg) => (
             <div
               key={msg.id}
@@ -571,7 +582,7 @@ export default function ChatPage() {
           <div ref={chatEndRef} />
         </div>
 
-        <div className="bg-white border-t border-gray-200 p-4 flex items-center space-x-2">
+        <div className="bg-white border-t border-gray-200 p-4 py-2 flex items-center space-x-2">
           <Button variant="ghost" size="icon">
             <Paperclip className="h-5 w-5 text-gray-500" />
           </Button>
