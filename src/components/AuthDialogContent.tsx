@@ -200,7 +200,7 @@ const AuthDialogContent = ({ onClose }: AuthDialogContentProps) => {
         <div className="bg-gradient-to-r from-primary-200 to-primary-400 flex items-center justify-center h-full">
           <div className="text-white text-center">
             <h2 className="text-2xl font-bold">
-              {isLogin ? "Welcome Back!" : "Create an Account"}
+              {isLogin ? "FlashFood" : "Create an Account"}
             </h2>
             <p className="mt-2">
               {isLogin

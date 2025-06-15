@@ -14,7 +14,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Flashstrom",
+  title: "FlashFood Admin",
   description: "App manage FlashFood for admins",
 };
 import { Toaster } from "@/components/ui/toaster";

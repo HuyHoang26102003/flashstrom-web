@@ -4,6 +4,7 @@ import { TrendingUp } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import { MdSaveAlt } from "react-icons/md";
 import { IncomeData } from "@/types/dashboard.types";
+import { LiveDataBadge } from "@/components/LiveDataBadge";
 
 import {
   Card,
@@ -25,6 +26,7 @@ export const description = "A simple area chart";
 interface NetRevenueChartProps {
   netIncomeData?: IncomeData[];
   grossIncomeData?: IncomeData[];
+  lastUpdated?: Date | null;
 }
 
 const chartConfig = {
@@ -41,6 +43,7 @@ const chartConfig = {
 export function NetRevenueChart({
   netIncomeData,
   grossIncomeData,
+  lastUpdated,
 }: NetRevenueChartProps) {
   // Format data for the chart
   const chartData =
@@ -68,11 +71,11 @@ export function NetRevenueChart({
     <Card className="shadcn-card-default">
       <div className="jb gap-2">
         <div className="fc gap-1">
-          <CardTitle>Net Revenue</CardTitle>
-          <CardDescription className="font-thin text-xs text-neutral-400">
-            Net revenue is total income minus returns, discounts, and
-            allowances, showing actual earnings.
-          </CardDescription>
+          <div className="flex items-center gap-2">
+            <CardTitle>Net Revenue</CardTitle>
+            <LiveDataBadge lastUpdated={lastUpdated || null} />
+          </div>
+          <CardDescription className="font-thin text-xs text-neutral-400"></CardDescription>
         </div>
         <Button
           variant={"outline"}
@@ -122,12 +125,7 @@ export function NetRevenueChart({
               month{" "}
               <TrendingUp className="h-4 w-4 text-success-700 font-bold" />
             </div>
-            <div className="flex items-center gap-2 leading-none text-muted-foreground">
-              <span className="link-date-hover text-info-700">
-                January 2024
-              </span>{" "}
-              - <span className="link-date-hover text-info-700">June 2024</span>
-            </div>
+            <div className="flex items-center gap-2 leading-none text-muted-foreground"></div>
           </div>
         </div>
       </CardFooter>

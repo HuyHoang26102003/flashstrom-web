@@ -4,6 +4,7 @@ import { TrendingUp } from "lucide-react";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 import { MdSaveAlt } from "react-icons/md";
 import { UserGrowthData } from "@/types/dashboard.types";
+import { LiveDataBadge } from "@/components/LiveDataBadge";
 
 import {
   Card,
@@ -24,6 +25,7 @@ export const description = "A multiple line chart";
 
 interface UserGrowthRateChartProps {
   userGrowthData?: UserGrowthData[];
+  lastUpdated?: Date | null;
 }
 
 const chartConfig = {
@@ -47,6 +49,7 @@ const chartConfig = {
 
 export function UserGrowthRateChart({
   userGrowthData,
+  lastUpdated,
 }: UserGrowthRateChartProps) {
   // Format data for the chart
   const chartData = userGrowthData
@@ -111,11 +114,11 @@ export function UserGrowthRateChart({
     <Card className="shadcn-card-default">
       <div className="jb gap-2">
         <div className="fc gap-1">
-          <CardTitle>User Growth Rate</CardTitle>
-          <CardDescription className="font-thin text-xs text-neutral-400">
-            User growth rate measures the percentage increase in active users
-            over a specified period.
-          </CardDescription>
+          <div className="flex items-center gap-2">
+            <CardTitle>User Growth Rate</CardTitle>
+            <LiveDataBadge lastUpdated={lastUpdated || null} />
+          </div>
+          <CardDescription className="font-thin text-xs text-neutral-400"></CardDescription>
         </div>
         <Button
           variant={"outline"}
@@ -176,12 +179,7 @@ export function UserGrowthRateChart({
               month{" "}
               <TrendingUp className="h-4 w-4 text-success-700 font-bold" />
             </div>
-            <div className="flex items-center gap-2 leading-none text-muted-foreground">
-              <span className="link-date-hover text-info-700">
-                January 2024
-              </span>{" "}
-              - <span className="link-date-hover text-info-700">June 2024</span>
-            </div>
+            <div className="flex items-center gap-2 leading-none text-muted-foreground"></div>
           </div>
         </div>
       </CardFooter>
